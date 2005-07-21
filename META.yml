@@ -1,0 +1,14 @@
+# http://module-build.sourceforge.net/META-spec.html
+#XXXXXXX This is a prototype!!!  It will change in the future!!! XXXXX#
+name:         FrameNet-WordNet-Detour
+version:      0.9
+version_from: lib/FrameNet/WordNet/Detour.pm
+installdirs:  site
+requires:
+    Test::More:                    0
+    WordNet::QueryData:            1.37
+    WordNet::Similarity::path:     0.1
+    XML::TreeBuilder:              3.09
+
+distribution_type: module
+generated_by: ExtUtils::MakeMaker version 6.17
