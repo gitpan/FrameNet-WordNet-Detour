@@ -2,7 +2,7 @@ package FrameNet::WordNet::Detour::Frame;
 
 require Exporter;
 our @ISA = qw(Exporter);
-our $VERSION = "0.91";
+our $VERSION = "0.92";
 
 use strict;
 use warnings;
@@ -60,4 +60,23 @@ __END__
 
 =head1 NAME
 
-Frame - A class that represents one single resulting frame from the Detour.
+FrameNet::WordNet::Detour::Frame - A class representing one single frame.
+
+=head1 SYNOPSIS
+
+  my $frame = {$result->get_best_frames}->[0];
+
+  print "Frame ".$frame->get_name."\n";
+  print "Weight ".$frame->get_weight."\n";
+
+=head1 BUGS
+
+Please report bugs to L<mailto:reiter@cpan.org>.
+
+=head1 COPYRIGHT
+
+Copyright 2005 Aljoscha Burchardt and Nils Reiter. All rights reserved.
+
+This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
+
+=cut

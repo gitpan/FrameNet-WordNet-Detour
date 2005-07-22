@@ -1,6 +1,14 @@
 Revision history for FrameNet-WordNet-Detour
 
-9.91 07/22/05
+0.92 07/22/05
+     - More documentation
+     - Introduced a command-line interface called Detour:
+       * located in bin/
+       * shows the basic use of the Detour
+       * requires additional modules: Getopt::Long and Pod::Usage
+     - Improvements on the robustness of the Detour
+
+0.91 07/22/05
      - Better testing capabilities
      - More compatibility with CPAN
      - More (and better) documentation

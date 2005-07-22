@@ -2,7 +2,7 @@ package FrameNet::WordNet::Detour::Data;
 
 require Exporter;
 our @ISA = qw(Exporter);
-our $VERSION = "0.91";
+our $VERSION = "0.92";
 
 use strict;
 use warnings;
@@ -153,8 +153,7 @@ __END__
 
 =head1 NAME
 
-Synset2frames::Data - A Class to represent the results of the Detour.
-
+FrameNet::WordNet::Detour::Data - A class representing the results of the Detour.
 
 =head1 SYNOPSIS
 

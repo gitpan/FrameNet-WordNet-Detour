@@ -13,7 +13,10 @@ WriteMakefile(
 	'WordNet::QueryData' => 1.37,
 	'WordNet::Similarity::path' => 0.10,
 	'XML::TreeBuilder' => 3.09,
+	'Getopt::Long' => 2.34,
+	'Pod::Usage' => 0,
     },
+    EXE_FILES => [ 'script/Detour' ],
     dist                => { COMPRESS => 'gzip -9f', SUFFIX => 'gz', },
     clean               => { FILES => 'FrameNet-WordNet-Detour-*' },
 );

@@ -2,7 +2,7 @@ package FrameNet::WordNet::Detour;
 
 require Exporter;
 our @ISA = qw(Exporter);
-our $VERSION = "0.91";
+our $VERSION = "0.92";
 
 use strict;
 use warnings;
@@ -33,19 +33,15 @@ sub new
   $class = ref $class || $class;
 
   $this->{'wn'} = shift;
-  unless (defined $this->{wn}) {
-    $this->{errorString} .= "\nError (${class}::new()) - ";
-    $this->{errorString} .= "A WordNet::QueryData object is required.";
-    $this->{error} = 2;
-  };
-  
   $this->{'sim'} = shift;
-  unless (defined $this->{sim}) {
-    $this->{errorString} .= "\nError (${class}::new()) - ";
-    $this->{errorString} .= "A WordNet::Similarity:: object is required.";
-    $this->{error} = 2;
+  #print STDERR "!!".(ref($this->{'wn'}));
+  if (ref $this->{'wn'} ne "WordNet::QueryData") {
+    croak("A WordNet::QueryData object is required.");
   };
 
+  if (ref $this->{'sim'} ne "WordNet::Similarity::path") {
+    croak("A WordNet::Similarity::path object is required.");
+  }
   bless $this, $class;
 
   $this->initialize;
@@ -78,20 +74,7 @@ sub query {
     };
     return FrameNet::WordNet::Detour::Data->new($self->basicQuery($synset),$synset,'OK');
   }
-  
-  # if the query-word is underspecified (e.g. get#v),
-  # we query each possible sense once, collect a list of results
-  # and return it
-    
-  elsif ($synset =~ /^[\w\- ']+#[nva]$/i) {
-    # my $results = [];
-    my @senses = $self->{'wn'}->querySense($synset);
-    if ((scalar @senses) == 0) {
-      my $msg = "\'$synset\' not listed in WordNet";
-      carp "$msg" if ($self->{'verbosity'});
-      return FrameNet::WordNet::Detour::Data->new($self->basicQuery($synset),$synset,'OK');
-    }
-  }
+
   # if the query-word is underspecified (e.g. get#v),
   # we query each possible sense once, collect a list of results
   # and return it
@@ -106,14 +89,15 @@ sub query {
     return $self->query(\@senses);
   } 
 
-  elsif (ref $synset eq "ARRAY") {
+  elsif (ref($synset) eq "ARRAY") {
     my @r = ();
     foreach my $sense (@$synset) {
       push(@r, $self->query($sense));
     };
     return \@r;
   }
-    else {
+  
+  else {
     my $msg = "Query (\'$synset\') not well-formed";
     carp $msg if ($self->{'verbosity'});
     return FrameNet::WordNet::Detour::Data->new({},$synset, $msg);
@@ -123,7 +107,7 @@ sub query {
 sub basicQuery {
   my ($self,$synset) = @_;
   
-  print STDERR "\nQuerying: $synset ...\n" if ($self->{'verbosity'});
+  print STDERR "Querying: $synset ...\n" if ($self->{'verbosity'});
 
 
   # Caching
@@ -131,6 +115,7 @@ sub basicQuery {
     my $KnownResults;
     if (-e $self->{'resulthashname'}) {
       $KnownResults = retrieve($self->{'resulthashname'});
+      print STDERR "Found synset in cache...\n" if($self->{'verbosity'})
     };
     return $KnownResults->{$synset} if (exists($KnownResults->{$synset}));
   };
@@ -540,10 +525,13 @@ FrameNet::WordNet::Detour - a WordNet to FrameNet Detour.
   my $result = $detour->query($synset);
 
   if ($result->isOK) {
-    print "Beste Frames: \n"
+    print "Best frames: \n"
     print join(' ', $result->get_best_framenames);
-    print "Alle Frames: \n"
+
+    print "All frames: \n"
     print join(' ', $result->get_all_framenames);
+
+    print "All frames with weights: \n";
     foreach my $frame ($result->get_all_frames) {
        print $frame->get_name.": ";
        print $frame->get_weight."\n";
@@ -568,6 +556,34 @@ In bash:
 Since the module needs to save several temporal results (due to performance reasons), it currently works only on Unix-like systems, where C</tmp> is available. 
 
 =head1 DESCRIPTION
+
+The FrameNet-WordNet-Detour takes one or more synsets as input and maps each of them to a set of weighted frames. 
+
+=head2 WordNet
+
+WordNet is an online lexical reference system whose design is inspired by current psycholinguistic theories of human lexical memory. English nouns, verbs, adjectives and adverbs are organized into synonym sets, each representing one underlying lexical concept. Different relations link the synonym sets.
+
+WordNet is developed at Princeton University. 
+
+See L<http://wordnet.princeton.edu/> for more information.
+
+=head2 FrameNet
+
+The Berkeley FrameNet project is creating an on-line lexical resource for English, based on frame semantics and supported by corpus evidence. The aim is to document the range of semantic and syntactic combinatory possibilities (valences) of each word in each of its senses, through computer-assisted annotation of example sentences and automatic tabulation and display of the annotation results.
+
+See L<http://framenet.icsi.berkeley.edu/> for more information.
+
+=head2 Detour
+
+The basic idea behind the Detour system, is that lexical units that evoke the same frame, are related through WordNet -- either as antonyms, hypernyms or whatever. Therefore, it should be possible to compute a frame for a lexical unit, even if the lexical unit is not directly listed in FrameNet. 
+
+Generally speaking, for a given synset, the Detour searches the antonyms and hypernyms via WordNet. Then, it looks up in the FrameNet database for each of the searched synsets.
+
+One of these frames should be our target frame (the one we want to have for this LU). For each frame, the Detour then computes a weight (incorporating the number of synsets, the number of frames, the distance of each found synset to the given one). 
+
+The frame with the highest weight is the one we searched for. 
+
+(A scientific paper about that is in work)
 
 =head1 METHODS
 
@@ -601,14 +617,6 @@ Returns a reference to a list of Data-objects. These are the results of a query 
 For the specification of each single synset, the same rules as in the function L</query> apply.
 
 Internally, this method will be called with all synsets for this word in a list from within C<query()> if one gives a query string of the second form.
-
-B<For internal use only.>
-
-=item basicQuery ( $synset )
-
-Queries one single, fully specified Synset, and returns the result as a non-blessed reference to a hash. 
-
-B<For internal use only.>
 
 =item cached ( )
 
