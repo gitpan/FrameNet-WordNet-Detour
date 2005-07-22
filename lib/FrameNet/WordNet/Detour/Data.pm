@@ -1,11 +1,8 @@
 package FrameNet::WordNet::Detour::Data;
 
-BEGIN {
-  use Exporter   ();
-  our ($VERSION, @ISA);
-  $VERSION     = 0.9;
-  @ISA         = qw(Exporter);
-};
+require Exporter;
+our @ISA = qw(Exporter);
+our $VERSION = "0.91";
 
 use strict;
 use warnings;
@@ -156,23 +153,47 @@ __END__
 
 =head1 NAME
 
-Synset2frames::Data - A Class to represent the results of Synset2frames.
+Synset2frames::Data - A Class to represent the results of the Detour.
 
 
 =head1 SYNOPSIS
 
-  use Synset2frames::Data;
+  use FrameNet::WordNet::Detour;
 
-=head1 DESCRIPTION
+  my $wn = WordNet::QueryData->new($WNSEARCHDIR);
+  my $sim = WordNet::Similarity::path->new ($wn);
+  my $detour = FrameNet::WordNet::Detour->new($wn,$sim);
 
-=head1 METHODS
+  my $result = $detour->query($synset);
 
-=over 4
+  $result->isOK;       # Returns whether there were problems in the run
+  $result->getMessage; # Returns 'Ok' or an error message
 
-=item isOK ( )
+  # All frames are returned as lists of 
+  # L<FrameNet::WordNet::Detour::Frame> objects
 
-Returns a true value if everything went fine. If some problems occured in the process, it returns a false value.
 
-=back
+  $result->get_best_frames; # Returns the frames 
+                            # with the highest weight
+  $result->get_best_frames(3); # Returns the frames
+                               # with the three highest weights
+  $result->get_all_frames; # Returns all resulting frames
+
+
+  $result->get_best_framenames;    # Returns the names
+                                   # of the highest weighted frames
+  $result->get_best_framenames(3); # Returns the names of the frames
+                                   # with the three highest weights
+  $result->get_all_framenames;     # Returns the names of all frames.
+
+=head1 BUGS
+
+Please report bugs to L<mailto:reiter@cpan.org>.
+
+=head1 COPYRIGHT
+
+Copyright 2005 Aljoscha Burchardt and Nils Reiter. All rights reserved.
+
+This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
 
 =cut

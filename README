@@ -1,15 +1,22 @@
 FrameNet-WordNet-Detour
 
-The README is used to introduce the module and provide instructions on
-how to install the module, any machine dependencies it may have (for
-example C compilers and installed libraries) and any other information
-that should be provided before the module is installed.
+VERSION
 
-A README file is required for CPAN modules since CPAN extracts the README
-file from a module distribution so that people browsing the archive
-can use it get an idea of the modules uses. It is usually a good idea
-to provide version information here so that people can decide whether
-fixes for the module are worth downloading.
+0.91
+
+PREREQUISITS
+
+CPAN-Modules:
+- WordNet::QueryData (>= 1.37)
+- WordNet::Similarity::path (>=0.10)
+- XML::TreeBuilder (>=3.09)
+
+Additionally:
+- WordNet (needed also for the WordNet::* modules)
+- FrameNet (>= 1.1, we tested on 1.1 and 1.2)
+
+The module wants to store some data in a temporary file, so it looks
+for /tmp. The tool may work only on Unix-derivate systems.
 
 INSTALLATION
 

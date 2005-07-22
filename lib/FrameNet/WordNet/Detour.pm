@@ -1,14 +1,8 @@
 package FrameNet::WordNet::Detour;
+
 require Exporter;
 our @ISA = qw(Exporter);
-our $VERSION = 0.9;
-
-#BEGIN {
-#  use Exporter   ();
-#  our ($VERSION, @ISA);
-#  $VERSION     = 0.9;
-#  @ISA         = qw(Exporter);
-#};
+our $VERSION = "0.91";
 
 use strict;
 use warnings;
@@ -20,7 +14,7 @@ use FrameNet::WordNet::Detour::Data;
 use WordNet::QueryData;
 use WordNet::Similarity::path;
 
-#my $SYNSET2FRAMES = "$Bin/$Script";
+my $VMAJOR = "0.9";
 my $FNHOME = $ENV{'FNHOME'};
 my $FNXML = "";
 if (-e $FNHOME."/frXML/frames.xml") {
@@ -68,7 +62,7 @@ sub initialize {
   $self->{'verbosity'} = 0;
   $self->{'results'} = [];
   
-  $self->{'resulthashname'} = ${TMP_PREFIX}."FrameNet-WordNet-Detour-".$VERSION."_".$self->{'limited'}.".dat";
+  $self->{'resulthashname'} = ${TMP_PREFIX}."FrameNet-WordNet-Detour-".$VMAJOR."_".$self->{'limited'}.".dat";
 
 }
 
@@ -103,7 +97,6 @@ sub query {
   # and return it
   
   elsif ($synset =~ /^[\w\- ']+#[nva]$/i) {
-    # my $results = [];
     my @senses = $self->{'wn'}->querySense($synset);
     if ((scalar @senses) == 0) {
       my $msg = "\'$synset\' not listed in WordNet";
@@ -123,7 +116,6 @@ sub query {
     else {
     my $msg = "Query (\'$synset\') not well-formed";
     carp $msg if ($self->{'verbosity'});
-    #print STDERR $msg."\n"  if ($self->{'verbosity'});
     return FrameNet::WordNet::Detour::Data->new({},$synset, $msg);
   }
 };
@@ -133,6 +125,8 @@ sub basicQuery {
   
   print STDERR "\nQuerying: $synset ...\n" if ($self->{'verbosity'});
 
+
+  # Caching
   if ($self->{'cached'}) {  
     my $KnownResults;
     if (-e $self->{'resulthashname'}) {
@@ -154,6 +148,7 @@ sub basicQuery {
   print STDERR "Best result(s): ".(join(' ',$self->best_frame))."\n" 
     if ($self->{'verbosity'});
   
+  # Caching
   if ($self->{'cached'}) {
     my $KnownResults = retrieve($self->{'resulthashname'}) if (-e $self->{'resulthashname'});
     $KnownResults->{$synset} = $self->{'result'};
@@ -300,7 +295,6 @@ sub lookup_synset {
 
 
   ### Retrieve /tmp/$usr-lu2frame-hash.pl if exists and up-to-date; else create it###
-  # nr: used perl-function stat() instead of linux-program for compatibility-reasons
   if (! -e "${TMP_PREFIX}lu2frames-hash.pl" || ((stat("${TMP_PREFIX}lu2frames-hash.pl"))[9] < (stat($FNXML))[9])) {
       $self->make_lu2frames_hash();
   }; #else {
@@ -325,13 +319,11 @@ sub lookup_synset {
 
       print STDERR $synsetprint."(".(int(($self->{'relatedness'}{"$synset"}*1000)+.5)/1000).") "
 	if ($self->{'verbosity'});
- #     print uc("$string\.$pos")."\n";
       # Is there a LU?
       if (exists $Lu2Frames->{lc("$string\.$pos")}) {
 	  
 	  foreach my $_frameName (@{$Lu2Frames->{lc("$string\.$pos")}}) {
 	      $MatchingFrames->{'lu'}->{$_frameName}->{"$synset"} = 1;
-	     # print uc("$string\.$pos")." --- ".uc($_frameName)."\n";
 	  };
       } elsif ($self->{'matched'}) {
 	  
@@ -372,7 +364,6 @@ sub lookup_synset {
 
 sub weight_frames {
   my ($self,$MatchingFrames) = @_;
-  # $self->clog(2, "Weighting Frames ...\n");
   my $AllResult;
 
 
@@ -411,13 +402,9 @@ sub weight_frames {
 	# Square of distance
 	$weight = $weight * $weight;
 	
-	# Boost for LU
-	# if ($reason eq 'lu') {$weight *= 1.5};
-	
 	# divided by Spreading Factor
 	$weight /= $SpreadingFactor->{$fee};
 	
-	# $AllResult->{$frameName}->{'weight'} += $weight;
 	$AllResult->{$frameName}->add_weight($weight);
       };
 
@@ -445,7 +432,6 @@ sub sort_by_weight {
   my $ResultsByWeight;
   foreach my $frame (keys %$AllResult) {
     my $weight = $AllResult->{$frame}->{'weight'};
-    #$weight = int(($weight*1000)+.5)/1000;
     $ResultsByWeight->{$weight}->{$frame} = $AllResult->{$frame};
   };
    
@@ -541,7 +527,7 @@ __END__
 
 =head1 NAME
 
-FrameNet::WordNet::Detour - a WordNet2FrameNet Detour.
+FrameNet::WordNet::Detour - a WordNet to FrameNet Detour.
 
 =head1 SYNOPSIS
 
@@ -566,9 +552,24 @@ FrameNet::WordNet::Detour - a WordNet2FrameNet Detour.
     print $result->get_message."\n";
   }
 
+=head1 PREREQUISITS
+
+Since it is a tool that maps from WordNet to FrameNet, you need WordNet and FrameNet. We developed it with WordNet 2.0 and FrameNet 1.1, but the Detour works as well with FrameNet 1.2. 
+
+You definitly have to set C<$WNHOME> and C<$FNHOME> in your environment. 
+
+In bash:
+
+  export WNHOME=~/WordNet-2.0/dict/
+  export FNHOME=~/FrameNet1.1/
+
+(The exact paths may vary with your installation). 
+
+Since the module needs to save several temporal results (due to performance reasons), it currently works only on Unix-like systems, where C</tmp> is available. 
+
 =head1 DESCRIPTION
 
-=head1 FUNCTIONS
+=head1 METHODS
 
 =over 4
 
@@ -641,27 +642,11 @@ All output goes to STDERR.
 
 Default: No verbose, no debug. 
 
-=item initialize ( )
-
-This method initializes the object. I.e., it sets several values to its defaults and it empties the result-array. The default values are:
-
-=over 4
-
-=item * cached: 1
-
-=item * limited: 0
-
-=item * verbosity: 0
-
-=back
-
 =back
 
 =head1 BUGS
 
-=for text Please report bugs to reiter@cpan.org.
-
-=for html <p>Please report bugs to <a href="mailto:reiter@cpan.org">reiter@cpan.org</a>.</p>
+Please report bugs to L<mailto:reiter@cpan.org>.
 
 =head1 COPYRIGHT
 
@@ -670,6 +655,10 @@ Copyright 2005 Aljoscha Burchardt and Nils Reiter. All rights reserved.
 This module is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
 
 =head1 SEE ALSO
+
+L<http://framenet.icsi.berkeley.edu/>
+
+L<http://wordnet.princeton.edu/>
 
 L<WordNet::QueryData>
 
