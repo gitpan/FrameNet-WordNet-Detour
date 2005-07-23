@@ -1,5 +1,15 @@
 Revision history for FrameNet-WordNet-Detour
 
+0.93 07/23/05
+     - Improved Caching
+     - Semantics of WNHOME is now identically with it in other 
+       WordNet-related modules
+     - Detour can now initialize its own QueryData and Similarity
+       objects. In the new-method, they should left out by now. This
+       improves the performance of your scripts severly, since queries
+       that are already cached are answered now without need of the
+       QueryData-object, which takes around 15 seconds to load
+
 0.92 07/22/05
      - More documentation
      - Introduced a command-line interface called Detour:

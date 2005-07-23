@@ -2,7 +2,7 @@ package FrameNet::WordNet::Detour;
 
 require Exporter;
 our @ISA = qw(Exporter);
-our $VERSION = "0.92";
+our $VERSION = "0.93";
 
 use strict;
 use warnings;
@@ -32,16 +32,15 @@ sub new
 
   $class = ref $class || $class;
 
-  $this->{'wn'} = shift;
-  $this->{'sim'} = shift;
-  #print STDERR "!!".(ref($this->{'wn'}));
-  if (ref $this->{'wn'} ne "WordNet::QueryData") {
-    croak("A WordNet::QueryData object is required.");
-  };
+  $this->{'wn'} = shift || 0;
+  $this->{'sim'} = shift || 0;
+#  if (ref $this->{'wn'} ne "WordNet::QueryData") {
+#    croak("A WordNet::QueryData object is required.");
+#  };
 
-  if (ref $this->{'sim'} ne "WordNet::Similarity::path") {
-    croak("A WordNet::Similarity::path object is required.");
-  }
+#  if (ref $this->{'sim'} ne "WordNet::Similarity::path") {
+#    croak("A WordNet::Similarity::path object is required.");
+#  }
   bless $this, $class;
 
   $this->initialize;
@@ -58,8 +57,20 @@ sub initialize {
   $self->{'verbosity'} = 0;
   $self->{'results'} = [];
   
-  $self->{'resulthashname'} = ${TMP_PREFIX}."FrameNet-WordNet-Detour-".$VMAJOR."_".$self->{'limited'}.".dat";
+  $self->{'resulthashname'} = ${TMP_PREFIX}.
+    "FrameNet-WordNet-Detour-".$VMAJOR."-results_".$self->{'limited'}.".dat";
+  $self->{'luhashname'} = ${TMP_PREFIX}.
+    "FrameNet-WordNet-Detour-".$VMAJOR."-luhash.dat";
 
+}
+
+sub init_WordNet {
+  my $self = shift;
+  if (! $self->{'wn'}) {
+    $self->{'wn'} =  WordNet::QueryData->new;
+
+  };
+  $self->{'sim'} = WordNet::Similarity::path->new ($self->{'wn'});
 }
 
 sub query {
@@ -67,6 +78,21 @@ sub query {
   my $synset = shift;
 
   if ($synset =~ /^[\w\- ']+#[nva]#\d+$/i) {
+    # Caching
+    if ($self->{'cached'}) {  
+      my $KnownResults;
+      if (-e $self->{'resulthashname'}) {
+	$KnownResults = retrieve($self->{'resulthashname'});
+	if (exists($KnownResults->{$synset})) {
+	  print STDERR "Found synset in cache\n" if($self->{'verbosity'});
+	  return 
+	    FrameNet::WordNet::Detour::Data->new($KnownResults->{$synset},
+						 $synset,'OK')
+	    if (exists($KnownResults->{$synset}));
+	}
+      };
+    };
+    $self->init_WordNet;
     if (scalar($self->{'wn'}->querySense($synset,"syns")) == 0) {
       my $msg = "\'$synset\' not listed in WordNet";
       carp "$msg" if ($self->{'verbosity'});
@@ -80,11 +106,27 @@ sub query {
   # and return it
   
   elsif ($synset =~ /^[\w\- ']+#[nva]$/i) {
+    if ($self->{'cached'}) {
+      my $KnownResults = {};
+      $KnownResults = retrieve($self->{'resulthashname'})
+	if (-e $self->{'resulthashname'});
+      return $self->query($KnownResults->{$synset}) 
+	if (exists $KnownResults->{$synset});
+    };
+    $self->init_WordNet;
     my @senses = $self->{'wn'}->querySense($synset);
     if ((scalar @senses) == 0) {
       my $msg = "\'$synset\' not listed in WordNet";
       carp "$msg" if ($self->{'verbosity'});
       return FrameNet::WordNet::Detour::Data->new({},$synset,$msg);
+    };
+
+    if ($self->{'cached'}) {
+      my $KnownResults = {};
+      $KnownResults = retrieve($self->{'resulthashname'})
+	if (-e $self->{'resulthashname'});
+      $KnownResults->{$synset} = \@senses;
+      store($KnownResults,$self->{'resulthashname'});
     };
     return $self->query(\@senses);
   } 
@@ -110,16 +152,6 @@ sub basicQuery {
   print STDERR "Querying: $synset ...\n" if ($self->{'verbosity'});
 
 
-  # Caching
-  if ($self->{'cached'}) {  
-    my $KnownResults;
-    if (-e $self->{'resulthashname'}) {
-      $KnownResults = retrieve($self->{'resulthashname'});
-      print STDERR "Found synset in cache...\n" if($self->{'verbosity'})
-    };
-    return $KnownResults->{$synset} if (exists($KnownResults->{$synset}));
-  };
-  
   $self->{'similarities'} = {};
   $self->{'synset'} = $synset;
   my @tmp = split(/#/,$synset);
@@ -276,14 +308,12 @@ sub lookup_synset {
       $synsetprint = "\'$synsetprint\'";
   }
 
-
-
-
   ### Retrieve /tmp/$usr-lu2frame-hash.pl if exists and up-to-date; else create it###
-  if (! -e "${TMP_PREFIX}lu2frames-hash.pl" || ((stat("${TMP_PREFIX}lu2frames-hash.pl"))[9] < (stat($FNXML))[9])) {
+  if (! -e $self->{'luhashname'}) # || ((stat($self->{'luhashname'}))[9] < (stat($FNXML))[9])) {
+    {
       $self->make_lu2frames_hash();
-  }; #else {
-  my %TmpHash = %{retrieve("${TMP_PREFIX}lu2frames-hash.pl")};
+    };
+  my %TmpHash = %{retrieve($self->{'luhashname'})};
   my $Lu2Frames = $TmpHash{'lu2frames'};
   my $FrameNames = $TmpHash{'frameNames'};
 
@@ -394,7 +424,7 @@ sub weight_frames {
       };
 
       $AllResult->{$frameName}->set_weight($AllResult->{$frameName}->get_weight() / $self->{numberOfSynsets});
-
+      
       print STDERR $frameName.
 	"(".(int((($AllResult->{$frameName}->{'weight'})*1000)+.5)/1000).") "
 	  if ($self->{'verbosity'});
@@ -453,7 +483,7 @@ sub n_results {
 
 sub make_lu2frames_hash {
   my $self = shift;
-  print STDERR "\nGenerating LU index may take a while...\n" if ($self->{'verbosity'});
+  print STDERR "Generating LU index may take a while...\n" if ($self->{'verbosity'});
 
   my $file = $FNXML;
 
@@ -470,7 +500,7 @@ sub make_lu2frames_hash {
     };
   };
   
-  store ({'lu2frames'=>$Lu2Frames, 'frameNames'=>$FrameNames}, "${TMP_PREFIX}lu2frames-hash.pl");
+  store ({'lu2frames'=>$Lu2Frames, 'frameNames'=>$FrameNames}, $self->{'luhashname'});
 };
 
 
@@ -518,9 +548,7 @@ FrameNet::WordNet::Detour - a WordNet to FrameNet Detour.
 
   use FrameNet::WordNet::Detour;
 
-  my $wn = WordNet::QueryData->new($WNSEARCHDIR);
-  my $sim = WordNet::Similarity::path->new ($wn);
-  my $detour = FrameNet::WordNet::Detour->new($wn,$sim);
+  my $detour = FrameNet::WordNet::Detour->new;
 
   my $result = $detour->query($synset);
 
@@ -548,7 +576,7 @@ You definitly have to set C<$WNHOME> and C<$FNHOME> in your environment.
 
 In bash:
 
-  export WNHOME=~/WordNet-2.0/dict/
+  export WNHOME=~/WordNet-2.0/
   export FNHOME=~/FrameNet1.1/
 
 (The exact paths may vary with your installation). 
@@ -589,11 +617,9 @@ The frame with the highest weight is the one we searched for.
 
 =over 4
 
-=item new( $wn, $sim )
+=item new
 
-Blesses a new Detour-object. C<$wn> has to be an object of type L<WordNet::QueryData|WordNet::QueryData>, C<$sim> has to be an object of type L<WordNet::similarity::path|WordNet::similarity::path>.
-
-Will call implicitly the method C<initialize()>.
+Blesses a new Detour-object. Since version 0.93, WordNet::QueryData and WordNet::Similarity objects are no longer required to provide. The detour creates them if it needs them. 
 
 =item query ( $string )
 

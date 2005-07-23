@@ -2,7 +2,7 @@ FrameNet-WordNet-Detour
 
 VERSION
 
-0.91
+0.93
 
 PREREQUISITS
 
@@ -10,6 +10,8 @@ CPAN-Modules:
 - WordNet::QueryData (>= 1.37)
 - WordNet::Similarity::path (>=0.10)
 - XML::TreeBuilder (>=3.09)
+- Getopt::Long (>= 2.34)
+- Pod::Usage
 
 Additionally:
 - WordNet (needed also for the WordNet::* modules)
@@ -30,7 +32,7 @@ To install this module, run the following commands:
 
 COPYRIGHT AND LICENCE
 
-Copyright (C) 2005 Nils Reiter
+Copyright (C) 2005 Aljoscha Burchardt, Nils Reiter
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.

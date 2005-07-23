@@ -50,6 +50,11 @@ sub get_name {
   return $self->{'frame'};
 };
 
+sub get_fees {
+  my $self = shift;
+  return $self->{'fees'};
+};
+
 1;
 
 

@@ -58,6 +58,10 @@ sub get_weight {
   return $self->{'raw'}->{$frame}->{'weight'};
 };
 
+sub get_query {
+  my $self = shift;
+  return $self->{'query'};
+};
 
 # not working
 sub get_delta {
