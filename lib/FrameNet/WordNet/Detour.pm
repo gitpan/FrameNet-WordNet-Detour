@@ -2,7 +2,7 @@ package FrameNet::WordNet::Detour;
 
 require Exporter;
 our @ISA = qw(Exporter);
-our $VERSION = "0.93";
+our $VERSION = "0.94";
 
 use strict;
 use warnings;
@@ -15,13 +15,6 @@ use WordNet::QueryData;
 use WordNet::Similarity::path;
 
 my $VMAJOR = "0.9";
-my $FNHOME = $ENV{'FNHOME'};
-my $FNXML = "";
-if (-e $FNHOME."/frXML/frames.xml") {
-  $FNXML = $FNHOME."/frXML/frames.xml";
-} else {
-  $FNXML = $FNHOME."/xml/frames.xml";
-};
 my $TMP_PREFIX = "/tmp/".$ENV{'USER'}."-";
 
 
@@ -32,15 +25,19 @@ sub new
 
   $class = ref $class || $class;
 
-  $this->{'wn'} = shift || 0;
-  $this->{'sim'} = shift || 0;
-#  if (ref $this->{'wn'} ne "WordNet::QueryData") {
-#    croak("A WordNet::QueryData object is required.");
-#  };
 
-#  if (ref $this->{'sim'} ne "WordNet::Similarity::path") {
-#    croak("A WordNet::Similarity::path object is required.");
-#  }
+  $this->{'wnhome'} = shift || $ENV{'WNHOME'};
+  $this->{'fnhome'} = shift || $ENV{'FNHOME'};
+
+  $this->{'fnxml'} = "";
+  if (-e $this->{'fnhome'}."/frXML/frames.xml") {
+      $this->{'fnxml'} = $this->{'fnhome'}."/frXML/frames.xml";
+  } else {
+      $this->{'fnxml'} = $this->{'fnhome'}."/xml/frames.xml";
+  };
+
+  #print STDERR $this->{'wnhome'};
+
   bless $this, $class;
 
   $this->initialize;
@@ -67,8 +64,7 @@ sub initialize {
 sub init_WordNet {
   my $self = shift;
   if (! $self->{'wn'}) {
-    $self->{'wn'} =  WordNet::QueryData->new;
-
+    $self->{'wn'} =  WordNet::QueryData->new($self->{'wnhome'}."/dict/");
   };
   $self->{'sim'} = WordNet::Similarity::path->new ($self->{'wn'});
 }
@@ -485,7 +481,7 @@ sub make_lu2frames_hash {
   my $self = shift;
   print STDERR "Generating LU index may take a while...\n" if ($self->{'verbosity'});
 
-  my $file = $FNXML;
+  my $file = $self->{'fnxml'};
 
   my $tree = XML::TreeBuilder->new();
   $tree->parse_file($file);
@@ -572,7 +568,11 @@ FrameNet::WordNet::Detour - a WordNet to FrameNet Detour.
 
 Since it is a tool that maps from WordNet to FrameNet, you need WordNet and FrameNet. We developed it with WordNet 2.0 and FrameNet 1.1, but the Detour works as well with FrameNet 1.2. 
 
-You definitly have to set C<$WNHOME> and C<$FNHOME> in your environment. 
+
+
+Since the module needs to save several temporal results (due to performance reasons), it currently works only on Unix-like systems, where C</tmp> is available. 
+
+There are two possibilities to set the location of FrameNet and WordNet: You can specify the environment variables C<FNHOME> and C<WNHOME>.
 
 In bash:
 
@@ -581,7 +581,10 @@ In bash:
 
 (The exact paths may vary with your installation). 
 
-Since the module needs to save several temporal results (due to performance reasons), it currently works only on Unix-like systems, where C</tmp> is available. 
+ You have to set them if you do not use the second possibility - give the paths as strings to the new()-method:
+
+  use FrameNet::WordNet::Detour;
+  my $detour = FrameNet::WordNet::Detour->new("~/WordNet-2.0", "~/FrameNet1.1");
 
 =head1 DESCRIPTION
 

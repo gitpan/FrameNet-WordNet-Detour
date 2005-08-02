@@ -1,0 +1,89 @@
+#!perl
+
+use Getopt::Long;
+use WordNet::QueryData;
+use WordNet::Similarity::path;
+use FrameNet::WordNet::Detour;
+use Pod::Usage;
+use Storable;
+
+# one result by default
+my $number_results = 1;
+my $weights = 0;
+my $fees = 0;
+my $list = 0;
+my $wnhome = $ENV{'WNHOME'};
+my $fnhome = $ENV{'FNHOME'};
+GetOptions ('w' => \$weights, 
+	    'v' => \$verbose, 
+	    'vv' => \$vverbose,
+	    'd' => \$distance, 
+	    'e' => \$fees, 
+	    'l' => \$limited,
+	    'f' => \$fees,
+	    'wn=s' => \$wnhome,
+	    'fn=s' => \$fnhome,
+	    'help|?' => \$help,
+	    'n=i' =>\$number_results);
+
+my $detour = FrameNet::WordNet::Detour->new($wnhome,$fnhome);
+
+pod2usage(1) if ($help);
+
+sub printresult {
+  $result = shift;
+  print $result->get_query."\n" if ($list);
+  my $rhash = $result->get_best_frames($number_results);
+  foreach $frame (@$rhash) {
+    print $frame->get_name;
+    print " ".$frame->get_weight(1) if ($weights);
+    print " (".join(',',@{$frame->get_fees}).")" if ($fees);
+    print "; ";
+  };
+  print "\n";
+};
+
+
+my $query = shift;
+
+$detour->unlimited;
+$detour->set_verbose if ($verbose);
+$detour->set_debug if ($vverbose);
+
+my $result = $detour->query($query);
+#print STDERR ref $result;
+if ((ref $result) eq "FrameNet::WordNet::Detour::Data") {
+  printresult($result);
+} else {
+  foreach $res (@$result) {
+    $list = 1;
+    printresult($res);
+    print "\n";
+  }
+}
+
+
+__END__
+
+=head1 NAME 
+
+Detour - Command-line interface for FrameNet::WordNet::Detour
+
+=head1 SYNOPSIS
+
+Detour [options] synset
+
+ Options:
+   -w         display weights for each frame
+   -v         run in verbose mode
+   -vv        run in debuging mode
+   -l         run in limited mode
+   --wn PATH  set path to WordNet
+   --fn PATH  set path to FrameNet
+   -h         show this help
+
+ Synset:
+   A specific synset (e.g. 'get#v#1') or all synsets for one 
+   lexical unit for one part-of-speech (e.g. 'get#v')
+
+=cut
