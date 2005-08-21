@@ -1,5 +1,20 @@
 Revision history for FrameNet-WordNet-Detour
 
+0.95 unreleased
+     - Fixed bug, which resulted in choosing the wrong cache
+     - Better Accessibility of the interesting properties via the
+       Data-object. Additional methods:
+       * get_number_of_frames
+       * get_weight 
+       * get_fees
+       * get_frame
+       * get_best_weight
+     - Better documentation of the Data-object
+     - Fixed a bug in the command line script ("-l" did not run
+       the detour in limited mode)
+     - Fixed a bug in the verbose output
+     - Command line interface is now called "detour" instead of "Detour"
+
 0.94 08/02/05
      - Fixed Makefile bugs
      - It is now possible to give the path to WordNet and FrameNet 

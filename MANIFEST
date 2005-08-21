@@ -6,7 +6,7 @@ README
 lib/FrameNet/WordNet/Detour.pm
 lib/FrameNet/WordNet/Detour/Data.pm
 lib/FrameNet/WordNet/Detour/Frame.pm
-script/Detour
+script/detour
 t/00-load.t
 t/01-module.t
 t/02-detour.t

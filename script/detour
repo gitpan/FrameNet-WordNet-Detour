@@ -18,9 +18,8 @@ GetOptions ('w' => \$weights,
 	    'v' => \$verbose, 
 	    'vv' => \$vverbose,
 	    'd' => \$distance, 
-	    'e' => \$fees, 
+	    'e|f' => \$fees, 
 	    'l' => \$limited,
-	    'f' => \$fees,
 	    'wn=s' => \$wnhome,
 	    'fn=s' => \$fnhome,
 	    'help|?' => \$help,
@@ -47,11 +46,12 @@ sub printresult {
 my $query = shift;
 
 $detour->unlimited;
+$detour->limited if ($limited);
 $detour->set_verbose if ($verbose);
 $detour->set_debug if ($vverbose);
 
 my $result = $detour->query($query);
-#print STDERR ref $result;
+
 if ((ref $result) eq "FrameNet::WordNet::Detour::Data") {
   printresult($result);
 } else {
@@ -67,14 +67,15 @@ __END__
 
 =head1 NAME 
 
-Detour - Command-line interface for FrameNet::WordNet::Detour
+detour - Command-line interface for FrameNet::WordNet::Detour
 
 =head1 SYNOPSIS
 
-Detour [options] synset
+detour [options] synset
 
  Options:
    -w         display weights for each frame
+   -f, -e     display the frame evoking elements
    -v         run in verbose mode
    -vv        run in debuging mode
    -l         run in limited mode
@@ -85,5 +86,9 @@ Detour [options] synset
  Synset:
    A specific synset (e.g. 'get#v#1') or all synsets for one 
    lexical unit for one part-of-speech (e.g. 'get#v')
+
+=head1 DESCRIPTION
+
+detour is a small command line script that can be used to pose a query to the detour system. The detour system is a perl module, that can be found on CPAN (FrameNet::WordNet::Detour).
 
 =cut

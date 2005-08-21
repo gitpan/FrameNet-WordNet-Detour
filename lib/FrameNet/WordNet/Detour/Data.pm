@@ -2,10 +2,11 @@ package FrameNet::WordNet::Detour::Data;
 
 require Exporter;
 our @ISA = qw(Exporter);
-our $VERSION = "0.92";
+our $VERSION = "0.95";
 
 use strict;
 use warnings;
+use FrameNet::WordNet::Detour::Frame;
 
 sub new {
   my $class = shift;
@@ -16,6 +17,9 @@ sub new {
   $this->{'s2f-result'} = shift;
   $this->{'raw'} = $this->{'s2f-result'}{'raw'};
   $this->{'sorted'} = $this->{'s2f-result'}{'sorted'};
+#  print "!!!".join(',', keys %{$this->{'sorted'}})."!!!";
+  my @warr = reverse (sort { $a <=> $b } keys %{$this->{'sorted'}});
+  $this->{'weights'} = \@warr;
   $this->{'query'} = shift;
   $this->{'message'} = shift || '';
 
@@ -39,23 +43,24 @@ sub getMessage {
 
 sub get_fees {
   my $self = shift;
-  my $n = 0;
   my $frame = shift;
-  return @{$self->{'raw'}->{$frame}->{'fees'}};
-};
-
-sub get_similarities {
-  my $self = shift;
-  my $frame = shift;
-  my $n = shift || 0;
-  return @{$self->{'raw'}->{$frame}->{'similarities'}};
+  my $f = $self->get_frame($frame);
+  return $f if ($f == -1);
+  return $f->get_fees;
 };
 
 sub get_weight {
   my $self = shift;
   my $frame = shift;
+  my $f = $self->get_frame($frame);
 
-  return $self->{'raw'}->{$frame}->{'weight'};
+  return $f if ($f == -1);
+  return $f->get_weight;
+};
+
+sub get_weights {
+  my $self = shift;
+  return $self->{'weights'};
 };
 
 sub get_query {
@@ -82,9 +87,8 @@ sub get_delta {
   return int((($w0 - $w1)*1000)+0.5)/1000;
 };
 
-sub get_number_of_results {
+sub get_number_of_frames {
   my $self = shift;
-  my $n = shift || 0;
   return scalar (keys %{$self->{'raw'}});
 };
 
@@ -120,7 +124,9 @@ sub get_best_framenames {
   my $self = shift;
   my $m = shift || 1;
   my $frames = $self->get_best_frames($m);
-  return map($_->get_name, @$frames);
+  #print STDERR $frames->[0]->get_name;
+  my @arr =  map($_->get_name, @$frames);
+  return \@arr;
 };
 
 # Returns a list of all found frames.
@@ -148,8 +154,27 @@ sub get_all_frames {
   return $ResultList;
 };
 
-1;
+sub get_frame {
+  my $self = shift;
+  my $frame = shift;
+  return $self->{'raw'}->{$frame} if (exists($self->{'raw'}->{$frame}));
+  return $self->{'raw'}->{lc($frame)} if (exists($self->{'raw'}->{lc($frame)}));
+  return $self->{'raw'}->{ucfirst($frame)} if (exists($self->{'raw'}->{ucfirst($frame)}));
+  return -1;
+};
 
+sub get_best_weight {
+  my $self = shift;
+  my $w = $self->get_weights;
+  return $w->[0];
+};
+
+sub get_frames_with_weight {
+  my $self = shift;
+  my $weight = shift;
+  my @l = keys %{$self->{'sorted'}->{$weight}};
+  return \@l;
+};
 
 __END__
 
@@ -188,6 +213,58 @@ FrameNet::WordNet::Detour::Data - A class representing the results of the Detour
   $result->get_best_framenames(3); # Returns the names of the frames
                                    # with the three highest weights
   $result->get_all_framenames;     # Returns the names of all frames.
+
+=head1 METHODS
+
+=over 4
+
+=item get_frame FRAME
+
+Returns the frame $string as a FrameNet::WordNet::Detour::Frame-object. Returns -1 if FRAME is not in the result (Pay attention on lower/upper case, we look a bit around, but that could be a hard-to-find error).
+
+=item get_best_frames [ NUMBER ] 
+
+Returns the frames with the highest weight (as Frame-objects). Optional: If you specify $number, the method returns the $number highest rated frames.
+
+=item get_all_frames
+
+Returns all found frames as Frame-objects.
+
+=item get_query
+
+Returns the query-synset as string.
+
+=item get_fees FRAME
+
+Returns the frame evoking elements for the given frame. Returns -1 if FRAME was not in the result (Pay attention on lower/upper case, we look a bit around, but that could be a hard-to-find error).
+
+=item get_weight FRAME
+
+Returns the weight of the given frame. Returns -1 if FRAME was not in the result(Pay attention on lower/upper case, we look a bit around, but that could be a hard-to-find error).
+
+=item get_weights
+
+Returns a reference to an array of all weights that appeared in this run. The weights are sorted in descending order (normally, one is interested in the best e.g. highest values instead of the bad ones).
+
+=item get_number_of_frames
+
+Returns the overall number of frames found for this specific query:
+
+  # The first variant returns all frames, because even in the worst 
+  # case (that each frame has a different weight) we get all weight
+  # classes. It does not matter if one specifies a number greater 
+  # that the numer of existing frames, 
+  # so the second variant leads normally to the same results.
+
+  $result->get_best_frames($result->get_number_of_frames) 
+
+  $result->get_best_frames(1000);
+
+=item get_frames_with_weight WEIGHT
+
+Returns a reference to a list of the frames with the given weight. You should notice, that you have to give the exact weight - e.g. like in the get_weights-array. Rounded values will not find anything.
+
+=back
 
 =head1 BUGS
 

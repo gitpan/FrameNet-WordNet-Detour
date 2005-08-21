@@ -2,7 +2,7 @@ package FrameNet::WordNet::Detour::Frame;
 
 require Exporter;
 our @ISA = qw(Exporter);
-our $VERSION = "0.92";
+our $VERSION = "0.95";
 
 use strict;
 use warnings;
@@ -42,7 +42,7 @@ sub set_weight {
 sub get_weight {
   my $self = shift;
   my $rounded = shift || 0;
-  return ($rounded? int(($self->{'weight'}*1000)+.5)/1000 :$self->{'weight'});
+  return ($rounded? int(($self->{'weight'} * 1000)+0.5)/1000 :$self->{'weight'});
 };
 
 sub get_name {

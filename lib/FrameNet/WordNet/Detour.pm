@@ -2,7 +2,7 @@ package FrameNet::WordNet::Detour;
 
 require Exporter;
 our @ISA = qw(Exporter);
-our $VERSION = "0.94";
+our $VERSION = "0.95";
 
 use strict;
 use warnings;
@@ -52,13 +52,26 @@ sub initialize {
   $self->{'limited'} = 0;  
   $self->{'matched'} = 0;
   $self->{'verbosity'} = 0;
-  $self->{'results'} = [];
+  $self->{'results'} = {};
   
-  $self->{'resulthashname'} = ${TMP_PREFIX}.
-    "FrameNet-WordNet-Detour-".$VMAJOR."-results_".$self->{'limited'}.".dat";
+  $self->set_cache_name;
+
   $self->{'luhashname'} = ${TMP_PREFIX}.
     "FrameNet-WordNet-Detour-".$VMAJOR."-luhash.dat";
 
+};
+
+sub reset {
+  my $self = shift;
+  $self->{'results'} = [];
+  $self->{'result'} = {};
+};
+
+sub set_cache_name {
+  my $self = shift;
+  $self->{'resulthashname'} = ${TMP_PREFIX}.
+    "FrameNet-WordNet-Detour-".
+      $VMAJOR."-results_".$self->{'limited'}.($self->{'matched'}?"1":"").".dat";
 }
 
 sub init_WordNet {
@@ -72,6 +85,8 @@ sub init_WordNet {
 sub query {
   my $self = shift;
   my $synset = shift;
+
+  $self->reset;
 
   if ($synset =~ /^[\w\- ']+#[nva]#\d+$/i) {
     # Caching
@@ -185,21 +200,25 @@ sub uncached {
 sub limited {
   my $self = shift;
   $self->{'limited'} = 1;
+  $self->set_cache_name;
 };
 
 sub unlimited {
   my $self = shift;
   $self->{'limited'} = 0;
+  $self->set_cache_name;
 };
 
 sub matched {
     my $self = shift;
     $self->{'matched'} = 1;
+    $self->set_cache_name;
 };
 
 sub unmatched {
     my $self = shift;
     $self->{'matched'} = 0;
+    $self->set_cache_name;
 };
 
 sub set_verbose {
@@ -362,12 +381,14 @@ sub lookup_synset {
 #   };
 
   if ($self->{'verbosity'} gt 1) {
+    if (! $self->{'limited'} || $string ne $self->{'in_word'}) {
       print STDERR "\n  evokes(lu): [".
-	  join(' ',keys(%{$MatchingFrames->{'lu'}})).
+	join(' ',keys(%{$MatchingFrames->{'lu'}})).
 	  "]\n";
       print STDERR "  evokes(match): [".
-	  join(' ',keys(%{$MatchingFrames->{'match'}})).
+	join(' ',keys(%{$MatchingFrames->{'match'}})).
 	  "]\n" if ($self->{'matched'}); 
+    };
   };
   return $MatchingFrames;
 };
@@ -442,7 +463,7 @@ sub sort_by_weight {
 
   my $ResultsByWeight;
   foreach my $frame (keys %$AllResult) {
-    my $weight = $AllResult->{$frame}->{'weight'};
+    my $weight = $AllResult->{$frame}->get_weight;
     $ResultsByWeight->{$weight}->{$frame} = $AllResult->{$frame};
   };
    

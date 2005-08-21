@@ -16,7 +16,7 @@ WriteMakefile(
 	'Getopt::Long' => 2.34,
 	'Pod::Usage' => 0,
     },
-    EXE_FILES => [ 'script/Detour' ],
+    EXE_FILES => [ 'script/detour' ],
     dist                => { COMPRESS => 'gzip -9f', SUFFIX => 'gz', },
     clean               => { FILES => 'FrameNet-WordNet-Detour-*' },
 );
