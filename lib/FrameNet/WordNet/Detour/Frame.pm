@@ -2,7 +2,7 @@ package FrameNet::WordNet::Detour::Frame;
 
 require Exporter;
 our @ISA = qw(Exporter);
-our $VERSION = "0.95";
+our $VERSION = "0.96";
 
 use strict;
 use warnings;

@@ -2,7 +2,7 @@ package FrameNet::WordNet::Detour;
 
 require Exporter;
 our @ISA = qw(Exporter);
-our $VERSION = "0.95";
+our $VERSION = "0.96";
 
 use strict;
 use warnings;
@@ -82,11 +82,17 @@ sub init_WordNet {
   $self->{'sim'} = WordNet::Similarity::path->new ($self->{'wn'});
 }
 
-sub query {
+sub query ($$) {
   my $self = shift;
   my $synset = shift;
 
   $self->reset;
+  
+  if (not defined $synset) {
+    my $msg = "No Synset specified.\n";
+    carp "$msg" if ($self->{'verbosity'});
+    return FrameNet::WordNet::Detour::Data->new({},$synset,$msg);
+  }
 
   if ($synset =~ /^[\w\- ']+#[nva]#\d+$/i) {
     # Caching
@@ -104,7 +110,8 @@ sub query {
       };
     };
     $self->init_WordNet;
-    if (scalar($self->{'wn'}->querySense($synset,"syns")) == 0) {
+    my ($word, $pos, $sense) = split(/#/, $synset);
+    if (scalar($self->{'wn'}->querySense("$word#$pos")) == 0) {
       my $msg = "\'$synset\' not listed in WordNet";
       carp "$msg" if ($self->{'verbosity'});
       return FrameNet::WordNet::Detour::Data->new({},$synset,$msg);
@@ -129,7 +136,7 @@ sub query {
     if ((scalar @senses) == 0) {
       my $msg = "\'$synset\' not listed in WordNet";
       carp "$msg" if ($self->{'verbosity'});
-      return FrameNet::WordNet::Detour::Data->new({},$synset,$msg);
+      return [FrameNet::WordNet::Detour::Data->new({},$synset,$msg)];
     };
 
     if ($self->{'cached'}) {
@@ -168,7 +175,7 @@ sub basicQuery {
   my @tmp = split(/#/,$synset);
   $self->{'in_word'} = $tmp[0];
   
-  $self->{'verbose'} = '';
+#  $self->{'verbose'} = '';
   
   $self->{'result'}{'raw'} = $self->weight_frames($self->generate_candidate_frames($synset));
   $self->{'result'}{'sorted'} = $self->sort_by_weight;
@@ -567,23 +574,24 @@ FrameNet::WordNet::Detour - a WordNet to FrameNet Detour.
 
   my $detour = FrameNet::WordNet::Detour->new;
 
-  my $result = $detour->query($synset);
+  my $result = $detour->query("walk#v#1");
 
   if ($result->isOK) {
-    print "Best frames: \n"
-    print join(' ', $result->get_best_framenames);
+    print "Best frames: \n";
+    print join(' ', @{$result->get_best_framenames})."\n";
 
-    print "All frames: \n"
-    print join(' ', $result->get_all_framenames);
+    print "All frames: \n";
+    print join(' ', @{$result->get_all_framenames})."\n";
 
     print "All frames with weights: \n";
-    foreach my $frame ($result->get_all_frames) {
-       print $frame->get_name.": ";
-       print $frame->get_weight."\n";
+    foreach my $frame (@{$result->get_all_frames}) {
+	print $frame->get_name.": ";
+	print $frame->get_weight."\n";
     }
   } else {
     print $result->get_message."\n";
-  }
+  } 
+
 
 =head1 PREREQUISITS
 
@@ -659,14 +667,6 @@ The query-string can be given in two forms:
  get#v -- a word and its part-of-speech
 
 In either way, the delimiter has to be '#'.
-
-=item listQuery ( $list )
-
-Returns a reference to a list of Data-objects. These are the results of a query for each single synset in the given C<$list> (which has to be given as reference).
-
-For the specification of each single synset, the same rules as in the function L</query> apply.
-
-Internally, this method will be called with all synsets for this word in a list from within C<query()> if one gives a query string of the second form.
 
 =item cached ( )
 

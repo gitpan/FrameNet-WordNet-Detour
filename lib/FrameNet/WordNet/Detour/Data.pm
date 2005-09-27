@@ -2,7 +2,7 @@ package FrameNet::WordNet::Detour::Data;
 
 require Exporter;
 our @ISA = qw(Exporter);
-our $VERSION = "0.95";
+our $VERSION = "0.96";
 
 use strict;
 use warnings;
@@ -133,12 +133,11 @@ sub get_best_framenames {
 sub get_all_framenames ($) {
   my $self = shift;
   my $tmp = {};
-  foreach my $res (@{$self->{'raw'}}) {
-    foreach my $frame (keys %$res) {
+  foreach my $frame (keys %{$self->{'raw'}}) {
       $tmp->{$frame} = 1;
-    }
   }
-  return (keys %$tmp);
+  my @ret = keys %$tmp; 
+  return \@ret;
 };
 
 sub get_all_frames {

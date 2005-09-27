@@ -12,14 +12,17 @@ my $number_results = 1;
 my $weights = 0;
 my $fees = 0;
 my $list = 0;
+my $cached = 1;
+my $limited = 0;
 my $wnhome = $ENV{'WNHOME'};
 my $fnhome = $ENV{'FNHOME'};
-GetOptions ('w' => \$weights, 
+GetOptions ('weights' => \$weights, 
 	    'v' => \$verbose, 
 	    'vv' => \$vverbose,
 	    'd' => \$distance, 
 	    'e|f' => \$fees, 
-	    'l' => \$limited,
+	    'limited!' => \$limited,
+	    'cache!' => \$cached,
 	    'wn=s' => \$wnhome,
 	    'fn=s' => \$fnhome,
 	    'help|?' => \$help,
@@ -46,9 +49,12 @@ sub printresult {
 my $query = shift;
 
 $detour->unlimited;
+$detour->uncached;
 $detour->limited if ($limited);
 $detour->set_verbose if ($verbose);
 $detour->set_debug if ($vverbose);
+$detour->cached if ($cached);
+
 
 my $result = $detour->query($query);
 
@@ -74,14 +80,17 @@ detour - Command-line interface for FrameNet::WordNet::Detour
 detour [options] synset
 
  Options:
-   -w         display weights for each frame
-   -f, -e     display the frame evoking elements
-   -v         run in verbose mode
-   -vv        run in debuging mode
-   -l         run in limited mode
-   --wn PATH  set path to WordNet
-   --fn PATH  set path to FrameNet
-   -h         show this help
+   -w, --weights  display weights for each frame
+   -f, -e         display the frame evoking elements
+   -v             run in verbose mode
+   -vv            run in debuging mode
+   -l, --limited  run in limited mode
+   --no-limited   run in unlimited mode
+   -c, --cache    run using the cache
+   --no-cache     do not use the cache
+   --wn PATH      set path to WordNet
+   --fn PATH      set path to FrameNet
+   -h             show this help
 
  Synset:
    A specific synset (e.g. 'get#v#1') or all synsets for one 

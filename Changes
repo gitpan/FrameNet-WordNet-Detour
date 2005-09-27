@@ -1,6 +1,17 @@
 Revision history for FrameNet-WordNet-Detour
 
-0.95 unreleased
+0.96 09/27/05
+     - Fixed several bugs in the demo code
+     - get_all_framenames in the Data class now works and returns a reference
+     - Fixed a bug in Detour.pm that causes WordNet::QueryData to produce
+       a lot of error messages	
+     - Fixed a bug: 'word#pos' now returns a list reference with 
+       "empty result" if no result found  
+     - query() now recognizes immediately if no synset is given and returns a nice
+       error message
+     - updated documentation of the detour script
+
+0.95 08/22/05
      - Fixed bug, which resulted in choosing the wrong cache
      - Better Accessibility of the interesting properties via the
        Data-object. Additional methods:

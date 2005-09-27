@@ -8,6 +8,7 @@ use FrameNet::WordNet::Detour::Frame;
 
 my $detour = FrameNet::WordNet::Detour->new;
 $detour->unlimited;
+$detour->uncached;
 
 ok($detour->query("get#v#1")->isOK);
 ok(! $detour->query("get#")->isOK);
