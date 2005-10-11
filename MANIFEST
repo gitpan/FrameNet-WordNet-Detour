@@ -6,8 +6,10 @@ README
 lib/FrameNet/WordNet/Detour.pm
 lib/FrameNet/WordNet/Detour/Data.pm
 lib/FrameNet/WordNet/Detour/Frame.pm
-script/detour
-t/00-load.t
+script/customize.PL
+script/detour.proto
+script/make-luhash.PL
+t/00-load.t.PL
 t/01-module.t
 t/02-detour.t
 t/03-cmd.t

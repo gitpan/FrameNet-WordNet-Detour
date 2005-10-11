@@ -2,7 +2,7 @@ package FrameNet::WordNet::Detour;
 
 require Exporter;
 our @ISA = qw(Exporter);
-our $VERSION = "0.96";
+our $VERSION = "0.97";
 
 use strict;
 use warnings;
@@ -13,9 +13,9 @@ use FrameNet::WordNet::Detour::Frame;
 use FrameNet::WordNet::Detour::Data;
 use WordNet::QueryData;
 use WordNet::Similarity::path;
+use File::Spec;
 
-my $VMAJOR = "0.9";
-my $TMP_PREFIX = "/tmp/".$ENV{'USER'}."-";
+my $VCACHE = "0.91";
 
 
 sub new
@@ -25,19 +25,21 @@ sub new
 
   $class = ref $class || $class;
 
+  my $tuser = "user";
+  $tuser = $ENV{'USER'} if (defined $ENV{'USER'});
+  $this->{'tmp_filename_prefix'} = "$tuser-";
+  
 
   $this->{'wnhome'} = shift || $ENV{'WNHOME'};
   $this->{'fnhome'} = shift || $ENV{'FNHOME'};
 
-  $this->{'fnxml'} = "";
-  if (-e $this->{'fnhome'}."/frXML/frames.xml") {
-      $this->{'fnxml'} = $this->{'fnhome'}."/frXML/frames.xml";
-  } else {
-      $this->{'fnxml'} = $this->{'fnhome'}."/xml/frames.xml";
+  # Searching for the frames.xml file
+  if($this->{'fnhome'} ne "") {
+    $this->{'fnxml'} = "";
+    my $infix = "xml";
+    $infix = "frXML" if (-e File::Spec->catfile(($this->{'fnhome'},"frXML"),"frames.xml"));
+    $this->{'fnxml'} = File::Spec->catfile(($this->{'fnhome'},$infix),"frames.xml");
   };
-
-  #print STDERR $this->{'wnhome'};
-
   bless $this, $class;
 
   $this->initialize;
@@ -56,8 +58,8 @@ sub initialize {
   
   $self->set_cache_name;
 
-  $self->{'luhashname'} = ${TMP_PREFIX}.
-    "FrameNet-WordNet-Detour-".$VMAJOR."-luhash.dat";
+  $self->{'luhashname'} = File::Spec->catfile((File::Spec->tmpdir),$self->{'tmp_filename_prefix'}.
+    "FrameNet-WordNet-Detour-".$VCACHE."-luhash.dat");
 
 };
 
@@ -69,17 +71,18 @@ sub reset {
 
 sub set_cache_name {
   my $self = shift;
-  $self->{'resulthashname'} = ${TMP_PREFIX}.
+  $self->{'resulthashname'} = File::Spec->catfile((File::Spec->tmpdir),$self->{'tmp_filename_prefix'}.
     "FrameNet-WordNet-Detour-".
-      $VMAJOR."-results_".$self->{'limited'}.($self->{'matched'}?"1":"").".dat";
+      $VCACHE."-results_".$self->{'limited'}.($self->{'matched'}?"1":"").".dat");
 }
 
 sub init_WordNet {
   my $self = shift;
+  my $dictpath = File::Spec->catdir(($self->{'wnhome'},"dict"));
   if (! $self->{'wn'}) {
-    $self->{'wn'} =  WordNet::QueryData->new($self->{'wnhome'}."/dict/");
+    $self->{'wn'} =  WordNet::QueryData->new($dictpath);
   };
-  $self->{'sim'} = WordNet::Similarity::path->new ($self->{'wn'});
+  $self->{'sim'} = WordNet::Similarity::path->new($self->{'wn'});
 }
 
 sub query ($$) {
@@ -174,8 +177,6 @@ sub basicQuery {
   $self->{'synset'} = $synset;
   my @tmp = split(/#/,$synset);
   $self->{'in_word'} = $tmp[0];
-  
-#  $self->{'verbose'} = '';
   
   $self->{'result'}{'raw'} = $self->weight_frames($self->generate_candidate_frames($synset));
   $self->{'result'}{'sorted'} = $self->sort_by_weight;
@@ -405,8 +406,6 @@ sub weight_frames {
   my ($self,$MatchingFrames) = @_;
   my $AllResult;
 
-
-
   my $SpreadingFactor;
 
   foreach my $reason ('lu','match') {
@@ -425,15 +424,16 @@ sub weight_frames {
     foreach my $frameName (keys %{$MatchingFrames->{$reason}}) {
       
       $AllResult->{$frameName} = 
-	FrameNet::WordNet::Detour::Frame->new($frameName);
+	FrameNet::WordNet::Detour::Frame->new;
+      $AllResult->{$frameName}->name($frameName);
       
       foreach my $fee (keys %{$MatchingFrames->{$reason}->{$frameName}}) {
 
-	$AllResult->{$frameName}->add_fee($fee);
+	$AllResult->{$frameName}->fees_add($fee);
 	
 	my $weight = $self->{'relatedness'}{"$fee"};
 	
-	$AllResult->{$frameName}->add_sim($weight);
+	$AllResult->{$frameName}->sims_add($weight);
 
 	# cheat for adjectives!!!
 	if (!$weight) {$weight = 0.5};
@@ -447,7 +447,7 @@ sub weight_frames {
 	$AllResult->{$frameName}->add_weight($weight);
       };
 
-      $AllResult->{$frameName}->set_weight($AllResult->{$frameName}->get_weight() / $self->{numberOfSynsets});
+      $AllResult->{$frameName}->weight($AllResult->{$frameName}->weight / $self->{numberOfSynsets});
       
       print STDERR $frameName.
 	"(".(int((($AllResult->{$frameName}->{'weight'})*1000)+.5)/1000).") "
@@ -470,7 +470,7 @@ sub sort_by_weight {
 
   my $ResultsByWeight;
   foreach my $frame (keys %$AllResult) {
-    my $weight = $AllResult->{$frame}->get_weight;
+    my $weight = $AllResult->{$frame}->weight;
     $ResultsByWeight->{$weight}->{$frame} = $AllResult->{$frame};
   };
    
@@ -545,6 +545,11 @@ sub mergeResultHashes {
 };
 
 
+sub round  {
+  my $class = shift;
+  return int(((shift)*1000)+0.5)/1000;
+}
+
 sub toHash {
   my $list = shift;
   my $hash = {};
@@ -596,10 +601,7 @@ FrameNet::WordNet::Detour - a WordNet to FrameNet Detour.
 =head1 PREREQUISITS
 
 Since it is a tool that maps from WordNet to FrameNet, you need WordNet and FrameNet. We developed it with WordNet 2.0 and FrameNet 1.1, but the Detour works as well with FrameNet 1.2. 
-
-
-
-Since the module needs to save several temporal results (due to performance reasons), it currently works only on Unix-like systems, where C</tmp> is available. 
+The module needs furthermore a few temporary files.
 
 There are two possibilities to set the location of FrameNet and WordNet: You can specify the environment variables C<FNHOME> and C<WNHOME>.
 
@@ -614,6 +616,8 @@ In bash:
 
   use FrameNet::WordNet::Detour;
   my $detour = FrameNet::WordNet::Detour->new("~/WordNet-2.0", "~/FrameNet1.1");
+
+Currently, we did not test the detour on Windows, but in Theory that should work as well. At least, all path names are platform independent.
 
 =head1 DESCRIPTION
 
@@ -699,6 +703,10 @@ As the names allready tell, with these methods, one can set different modes of o
 All output goes to STDERR. 
 
 Default: No verbose, no debug. 
+
+=item round ( $number ) 
+
+Returns a rounded number that has only two decimals. Static method.
 
 =back
 

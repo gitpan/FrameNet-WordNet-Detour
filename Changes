@@ -1,5 +1,32 @@
 Revision history for FrameNet-WordNet-Detour
 
+0.97 10/11/05
+     - Using of File::Spec for platform independency
+     - the command line script now has growl capabilities 
+       if running on Mac OS X. Just install the perl module Mac::Growl
+       and use the parameter "--growl". Find out more about Growl
+       on http://www.growl.info/. The growl code is automatically
+       included at make time if the module Mac::Growl is present       
+     - Redesign of FrameNet::WordNet::Detour::Frame with usage 
+       of Class::MethodMaker
+     - Redesign of FrameNet::WordNet::Detour::Data with usage 
+       of Class::MethodMaker
+     - More documentation
+     - the command line script is now able to print also the
+       frame evoking element and its similarity
+     - Cache is now on Version 0.91 (due to the Changes in
+       Detour::Frame and Detour::Data)
+     - detour is no more static script, but can be configured while
+       installing (make) using the Customizer. It is a pattern that
+       allows the customization of perl code with make. More
+       information about this can be found on
+       www.coli.uni-saarland.de/~reiter/index.php4?action=perl#custom. 
+     - (a lot) more reliable and wide tests
+     - the LU cache (based on FrameNet 1.2) is now part of the
+       module (script/make-luhash.PL). Therefore, it can be installed 
+       without FrameNet. The hash will be created with the
+       installation
+
 0.96 09/27/05
      - Fixed several bugs in the demo code
      - get_all_framenames in the Data class now works and returns a reference

@@ -1,8 +1,24 @@
 #!perl
 
-use Test::Simple tests => 1;
+use Test::More tests => 5;
+
+my $t1 = "perl -I blib/arch/auto/ blib/script/detour";
 
 
-my $t1 = `blib/script/detour get#v#1`;
+like(`$t1 --help`, qr/^Usage/,
+     "Checking if the usage information is display correctly");
 
-ok($t1 =~ /Getting;/);
+like(`$t1 get#v#1`, qr/Getting;/,
+     "Checking without parameters");
+
+like(`$t1 --weights get#v#1`, qr/^Getting \d\.\d+;/,
+     "Checking --weights");
+
+
+like(`$t1 --weights --fees get#v#1`, 
+     qr/^Getting \d\.\d+ \([\w_]+\#[nva]\#\d(,[\w_]+\#[nva]\#\d)+\);/,
+     "Checking --fees");
+
+like(`$t1 --weights --sims get#v#1`,
+     qr/^Getting \d\.\d+ \([\w_]+\#[nva]\#\d\[[\d\.]+\](,[\w_]+\#[nva]\#\d\[[\d\.]+\])+\);/,
+     "Checking --sims");

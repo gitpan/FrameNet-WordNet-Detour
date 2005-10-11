@@ -1,8 +1,11 @@
 FrameNet-WordNet-Detour
 
-VERSION
+VERSION 0.97
 
-0.96
+DESCRIPTION
+
+The FrameNet-WordNet-Detour takes one or more synsets as input and
+maps each of them to a set of weighted frames.
 
 PREREQUISITS
 
@@ -11,14 +14,17 @@ CPAN-Modules:
 - WordNet::Similarity::path (>=0.10)
 - XML::TreeBuilder (>=3.09)
 - Getopt::Long (>= 2.34)
-- Pod::Usage
+- Pod::Usage (>=1.00)
+- File::Spec (>=0.86)
+- Class::MethodMaker (>= 2.00)
+- Test::More
 
 Additionally:
 - WordNet (needed also for the WordNet::* modules)
 - FrameNet (>= 1.1, we tested on 1.1 and 1.2)
 
-The module wants to store some data in a temporary file, so it looks
-for /tmp. The tool may work only on Unix-derivate systems.
+Optional:
+- Mac::Growl
 
 INSTALLATION
 
@@ -29,6 +35,13 @@ To install this module, run the following commands:
     make test
     make install
 
+The testing code makes use of the two environment variables $FNHOME
+and $WNHOME, which should be set to the FrameNet resp. WordNet
+directory. The testing code will not work without these variables,
+even though it is possible to use the module later on without them.
+
+As a workaround, we propose to temporarly set the variables (or to
+skip the tests, but that probably not a good advice ... )
 
 COPYRIGHT AND LICENCE
 
