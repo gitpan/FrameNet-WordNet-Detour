@@ -1,4 +1,4 @@
-#CUSTOM_BEGIN#GROWL#require Mac::Growl;#CUSTOM_END#
+#!/usr/bin/perl -w 
 
 use Getopt::Long;
 use WordNet::QueryData;
@@ -6,9 +6,9 @@ use WordNet::Similarity::path;
 use FrameNet::WordNet::Detour;
 use Pod::Usage;
 use Storable; 
-#GROWL_BEGIN#use Mac::Growl;#GROWL_END#
+#use Mac::Growl;
 
-my $VERSION = "0.97";
+my $VERSION = "0.98";
 # one result by default
 my $number_results = 1;
 my $weights = 0;
@@ -20,9 +20,10 @@ my $limited = 0;
 my $version = 0;
 my $license = 0;
 my $man = 0;
+my $cachecounter = 1;
 my $wnhome = $ENV{'WNHOME'};
 my $fnhome = $ENV{'FNHOME'};
-#GROWL_BEGIN#my $growl = 0;#GROWL_END#
+my $growl = 0;
 
 GetOptions ('weights' => \$weights, 
 	    'v' => \$verbose, 
@@ -31,12 +32,13 @@ GetOptions ('weights' => \$weights,
 	    'sims' => \$sims,
 	    'limited!' => \$limited,
 	    'cache!' => \$cached,
+	    'cachecounter=i' => \$cachecounter,
 	    'wn=s' => \$wnhome,
 	    'fn=s' => \$fnhome,
 	    'help|?' => \$help,
 	    'version' => \$version,
 	    'license' => \$license,
-#GROWL_BEGIN#	    'growl!' => \$growl,#GROWL_END#
+#	    'growl!' => \$growl,
 	    'man' => \$man,
 	    'n=i' =>\$number_results);
 
@@ -48,9 +50,13 @@ if ($version) {
 pod2usage(1) if ($help);
 pod2usage(-verbose => 2) if ($man);
 
-my $detour = FrameNet::WordNet::Detour->new($wnhome,$fnhome);
+my $detour = FrameNet::WordNet::Detour->new(-wnhome => $wnhome,
+					    -fnhome => $fnhome,
+					    -cached => $cached,
+					    -limited => $limited,
+					    -cachecounter => $cachecounter );
 
-#GROWL_BEGIN#Mac::Growl->RegisterNotifications('detour', ['SingleResult','ListResult'], ['SingleResult', 'ListResult']) if ($growl);#GROWL_END#
+#Mac::Growl->RegisterNotifications('detour', ['SingleResult','ListResult'], ['SingleResult', 'ListResult']) if ($growl);
 
 sub getresult {
   $ret = "";
@@ -88,18 +94,18 @@ sub getresult {
 
 my $query = shift;
 
-$detour->unlimited;
-$detour->uncached;
-$detour->limited if ($limited);
+#$detour->unlimited;
+#$detour->uncached;
+#$detour->limited if ($limited);
 $detour->set_verbose if ($verbose);
 $detour->set_debug if ($vverbose);
-$detour->cached if ($cached);
+#$detour->cached if ($cached);
 
 
 my $result = $detour->query($query);
 
 if ((ref $result) eq "FrameNet::WordNet::Detour::Data") {
-#GROWL_BEGIN#  Mac::Growl->PostNotification('detour', 'SingleResult', 'Computation complete', getresult($result)) if ($growl);#GROWL_END#
+ # Mac::Growl->PostNotification('detour', 'SingleResult', 'Computation complete', getresult($result)) if ($growl);
   print getresult($result)."\n";
 } else {
   my $g = "";
@@ -109,7 +115,7 @@ if ((ref $result) eq "FrameNet::WordNet::Detour::Data") {
     $g .= $t."\n";
     print $t."\n\n";
   }
-#GROWL_BEGIN#  Mac::Growl->PostNotification('detour', 'ListResult', 'Computation complete', $g) if ($growl);#GROWL_END#
+#  Mac::Growl->PostNotification('detour', 'ListResult', 'Computation complete', $g) if ($growl);
 
 }
 
@@ -137,8 +143,6 @@ detour [options] synset
    --no-cache     do not use the cache
    --wn PATH      set path to WordNet
    --fn PATH      set path to FrameNet
-#GROWL_START#   --growl        the detour shows growl notifications#GROWL_END#
-#GROWL_START#                     (only on Mac OS X; Mac::Growl required)#GROWL_END#
    --version      show version information
    -h             show this help
    --man          show the manpage

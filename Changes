@@ -1,5 +1,18 @@
 Revision history for FrameNet-WordNet-Detour
 
+0.98
+     - Switched to the named parameter style
+       (-wnhome => "..."). This means, that old scripts have to be
+       updated. Additionally, one can give the whole QueryData object
+       (-wnquerydata => $obj).
+     - due to licensing problems, the LU cache is removed from the
+       package. Again, one needs FrameNet to install the detour.
+     - removed all the Growl code (well, it was mostly useless...).
+       Along with that, we removed the customize-script to make it 
+       more reliable and easy to maintain - we're approaching 1.0, you
+       know ;-)
+
+
 0.97 10/11/05
      - Using of File::Spec for platform independency
      - the command line script now has growl capabilities 

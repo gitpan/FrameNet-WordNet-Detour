@@ -1,20 +1,26 @@
 #!perl
 
-use Test::More tests => 23;
+use Test::More tests => 24;
 
 use FrameNet::WordNet::Detour;
 use FrameNet::WordNet::Detour::Data;
 use FrameNet::WordNet::Detour::Frame;
 
-my $detour = FrameNet::WordNet::Detour->new;
-$detour->unlimited;
-$detour->cached;
+my $detour = FrameNet::WordNet::Detour->new(-cached => 1);
+#$detour->unlimited;
+#$detour->cached;
 
 # formal part - checking if all functions return the right type
 my $qr = $detour->query("get#v#1");
 like($qr,
      qr/^FrameNet::WordNet::Detour::Data/, 
      "Testing if query() returns a good reference");
+
+use WordNet::QueryData;
+my $qd = WordNet::QueryData->new($ENV{'WNHOME'}."/dict");
+my $detour2 = FrameNet::WordNet::Detour->new(-wnquerydata => $qd);
+like($detour->query("get#v#10"),qr/^FrameNet::WordNet::Detour::Data/,
+    "Testing if detour works with a given WordNet::QueryData object");
 
 # FrameNet::WordNet::Detour::Data
 isnt($qr->message,"",

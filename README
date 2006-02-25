@@ -1,6 +1,6 @@
 FrameNet-WordNet-Detour
 
-VERSION 0.97
+VERSION 0.98
 
 DESCRIPTION
 
@@ -23,9 +23,6 @@ Additionally:
 - WordNet (needed also for the WordNet::* modules)
 - FrameNet (>= 1.1, we tested on 1.1 and 1.2)
 
-Optional:
-- Mac::Growl
-
 INSTALLATION
 
 To install this module, run the following commands:
@@ -34,6 +31,12 @@ To install this module, run the following commands:
     make
     make test
     make install
+
+With 
+
+    perl Makefile.pl PREFIX=/some/directory
+
+you can target the installation in any directory you want.
 
 The testing code makes use of the two environment variables $FNHOME
 and $WNHOME, which should be set to the FrameNet resp. WordNet

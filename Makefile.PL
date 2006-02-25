@@ -4,19 +4,18 @@ use ExtUtils::MakeMaker;
 use File::Spec;
 
 my $VCACHE = 0.91;
-my $hashfilename =  File::Spec->catfile((File::Spec->tmpdir),
-					(defined $ENV{'USER'}?$ENV{'USER'}:'user').'-FrameNet-WordNet-Detour-'.$VCACHE.'-luhash.dat');
+#my $hashfilename =  File::Spec->catfile((File::Spec->tmpdir),
+#					(defined $ENV{'USER'}?$ENV{'USER'}:'user').'-FrameNet-WordNet-Detour-'.$VCACHE.'-luhash.dat');
 
 WriteMakefile(
 	      NAME                => 'FrameNet::WordNet::Detour',
 	      AUTHOR              => 'Nils Reiter <reiter@cpan.org>',
 	      VERSION_FROM        => 'lib/FrameNet/WordNet/Detour.pm',
 	      ABSTRACT_FROM       => 'lib/FrameNet/WordNet/Detour.pm',
-	      PL_FILES            => 
-
-	      { 'script/customize.PL script/detour.proto' => 'script/detour',
-	        'script/make-luhash.PL' => $hashfilename,
-	        't/00-load.t.PL' => 't/00-load.t' },
+#	      PL_FILES            => 
+#
+#	      { 'script/customize.PL script/detour.proto' => 'script/detour',
+#	        't/00-load.t.PL' => 't/00-load.t' },
 
 	      PREREQ_PM => 
 	      { 'Test::More' => 0,

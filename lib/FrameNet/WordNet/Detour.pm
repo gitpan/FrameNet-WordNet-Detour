@@ -2,7 +2,7 @@ package FrameNet::WordNet::Detour;
 
 require Exporter;
 our @ISA = qw(Exporter);
-our $VERSION = "0.97";
+our $VERSION = "0.98";
 
 use strict;
 use warnings;
@@ -25,13 +25,42 @@ sub new
 
   $class = ref $class || $class;
 
+  bless $this, $class;
+
+  my %params = @_;
+
   my $tuser = "user";
   $tuser = $ENV{'USER'} if (defined $ENV{'USER'});
   $this->{'tmp_filename_prefix'} = "$tuser-";
   
 
-  $this->{'wnhome'} = shift || $ENV{'WNHOME'};
-  $this->{'fnhome'} = shift || $ENV{'FNHOME'};
+  ### WNHOME ###
+  if (defined $params{-wnquerydata}) {
+    $this->{'wn'} = $params{-wnquerydata}
+  } elsif (defined $params{-wnhome}) {
+    $this->{'wnhome'} = $params{-wnhome}
+  } elsif (defined $ENV{'WNHOME'}) {
+    $this->{'wnhome'} = $ENV{'WNHOME'}
+  } else {
+    croak "Error: WordNet could not be found. Did you set \$WNHOME?\n";
+  }
+
+  ### WordNet::Similarity ###
+
+  if (defined $params{-wnsimilarity}) {
+    $this->{'sim'} = $params{-wnsimilarity}
+  };
+
+ 
+  ### FNHOME ###
+  if (defined $params{-fnhome}) {
+    $this->{'fnhome'} = $params{-fnhome}
+  } elsif (defined $ENV{'FNHOME'}) {
+    $this->{'fnhome'} = $ENV{'FNHOME'}
+  } else {
+    croak "Error: FrameNet could not be found. Did you set \$FNHOME?\n";
+  }
+ #
 
   # Searching for the frames.xml file
   if($this->{'fnhome'} ne "") {
@@ -39,27 +68,56 @@ sub new
     my $infix = "xml";
     $infix = "frXML" if (-e File::Spec->catfile(($this->{'fnhome'},"frXML"),"frames.xml"));
     $this->{'fnxml'} = File::Spec->catfile(($this->{'fnhome'},$infix),"frames.xml");
+    carp "Warning: frames.xml could not be found." if ($this->{'fnxml'} eq "");
   };
-  bless $this, $class;
 
-  $this->initialize;
-  
+  $this->initialize(\%params);
+
   return $this;
 }
 
 sub initialize {
   my $self = shift;
-  
-  $self->{'cached'} = 1;
-  $self->{'limited'} = 0;  
-  $self->{'matched'} = 0;
-  $self->{'verbosity'} = 0;
+  my $par = shift;
+
+  if (defined $par->{-cached}) {
+    $self->{'cached'} = $par->{-cached}
+  } else {
+    $self->{'cached'} = 0;
+  };
+
+  if (defined $par->{-cachecounter}) {
+    $self->{'cachecounter'} = $par->{-cachecounter};
+  } else {
+    $self->{'cachecounter'} = 1;
+  };
+  $self->{'cachecounterstart'} = $self->{'cachecounter'};
+
+  if (defined $par->{-limited}) {
+    $self->{'limited'} = $par->{-limited}
+  } else {
+    $self->{'limited'} = 0;  
+  };
+
+  if (defined $par->{-matched}) {
+    $self->{'matched'} = $par->{-matched}
+  } else {
+    $self->{'matched'} = 0;
+  };
+
+  if (defined $par->{-verbosity}) {
+    $self->{'verbosity'} = $par->{-verbosity}
+  } else {
+    $self->{'verbosity'} = 0;
+  };
+
   $self->{'results'} = {};
   
   $self->set_cache_name;
 
   $self->{'luhashname'} = File::Spec->catfile((File::Spec->tmpdir),$self->{'tmp_filename_prefix'}.
     "FrameNet-WordNet-Detour-".$VCACHE."-luhash.dat");
+
 
 };
 
@@ -82,7 +140,9 @@ sub init_WordNet {
   if (! $self->{'wn'}) {
     $self->{'wn'} =  WordNet::QueryData->new($dictpath);
   };
-  $self->{'sim'} = WordNet::Similarity::path->new($self->{'wn'});
+  if (! $self->{'sim'}) {
+    $self->{'sim'} = WordNet::Similarity::path->new($self->{'wn'});
+  }
 }
 
 sub query ($$) {
@@ -114,6 +174,7 @@ sub query ($$) {
     };
     $self->init_WordNet;
     my ($word, $pos, $sense) = split(/#/, $synset);
+    
     if (scalar($self->{'wn'}->querySense("$word#$pos")) == 0) {
       my $msg = "\'$synset\' not listed in WordNet";
       carp "$msg" if ($self->{'verbosity'});
@@ -186,9 +247,18 @@ sub basicQuery {
   
   # Caching
   if ($self->{'cached'}) {
-    my $KnownResults = retrieve($self->{'resulthashname'}) if (-e $self->{'resulthashname'});
-    $KnownResults->{$synset} = $self->{'result'};
-    store($KnownResults,$self->{'resulthashname'});
+    $self->{'KnownResults'} = retrieve($self->{'resulthashname'}) 
+      if (! defined $self->{'KnownResults'} and -e $self->{'resulthashname'});
+    if ($self->{'cachecounter'} == 1) {
+#      my $KnownResults = retrieve($self->{'resulthashname'}) 
+#	if (-e $self->{'resulthashname'});
+      $self->{'KnownResults'}->{$synset} = $self->{'result'};
+      store($self->{'KnownResults'},$self->{'resulthashname'});
+      $self->{'cachecounter'} = $self->{'cachecounterstart'};
+    } else {
+      $self->{'KnownResults'}->{$synset} = $self->{'result'};
+      $self->{'cachecounter'} -= 1;
+    }
   };  
   
   return $self->{'result'};
@@ -577,7 +647,14 @@ FrameNet::WordNet::Detour - a WordNet to FrameNet Detour.
 
   use FrameNet::WordNet::Detour;
 
+  # Creation without parameters, $WNHOME and $FNHOME will be used
   my $detour = FrameNet::WordNet::Detour->new;
+  
+  # Creation with some parameters
+  my $detour2 = FrameNet::WordNet::Detour->new(-wnhome => '/path/to/WordNet',
+                                               -fnhome => '/path/to/FrameNet'
+                                               -cached => 1,
+                                               -limited => undef);
 
   my $result = $detour->query("walk#v#1");
 
@@ -612,12 +689,13 @@ In bash:
 
 (The exact paths may vary with your installation). 
 
- You have to set them if you do not use the second possibility - give the paths as strings to the new()-method:
+ You have to set them if you do not use this possibility - give the paths as strings to the new()-method:
 
   use FrameNet::WordNet::Detour;
-  my $detour = FrameNet::WordNet::Detour->new("~/WordNet-2.0", "~/FrameNet1.1");
+  my $detour = FrameNet::WordNet::Detour->new(-wnhome => "~/WordNet-2.0", 
+                                              -fnhome => "~/FrameNet1.1");
 
-Currently, we did not test the detour on Windows, but in Theory that should work as well. At least, all path names are platform independent.
+Currently, we did not test the detour on Windows, but in theory that should work as well. At least, all path names are platform independent.
 
 =head1 DESCRIPTION
 
@@ -653,9 +731,33 @@ The frame with the highest weight is the one we searched for.
 
 =over 4
 
-=item new
+=item new ( %parameters )
 
-Blesses a new Detour-object. Since version 0.93, WordNet::QueryData and WordNet::Similarity objects are no longer required to provide. The detour creates them if it needs them. 
+Blesses a new Detour-object. Since version 0.93, WordNet::QueryData and WordNet::Similarity objects are no longer required to provide. The detour creates them if it needs them. Since version 0.98, the method expects parameters in the named parameters style that is quite common. The following parameters are supported:
+
+=over 8
+
+=item -wnhome
+
+The path to the WordNet installation. Optional. If not given, the environment variable $WNHOME is used. 
+
+=item -fnhome
+
+Path to the FrameNet installation. Optional. If not given, the environment variable $FNHOME is used.
+
+=item -wnquerydata
+
+The already initialised WordNet::QueryData object.
+
+=item -cached
+
+=item -verbosity
+
+=item -limited
+
+See the corresponding methods for details. 
+
+=back
 
 =item query ( $string )
 
