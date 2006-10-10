@@ -2,7 +2,7 @@ package FrameNet::WordNet::Detour;
 
 require Exporter;
 our @ISA = qw(Exporter);
-our $VERSION = "0.98";
+our $VERSION = "0.99";
 
 use strict;
 use warnings;
@@ -15,7 +15,7 @@ use WordNet::QueryData;
 use WordNet::Similarity::path;
 use File::Spec;
 
-my $VCACHE = "0.91";
+my $VCACHE = "0.92";
 
 
 sub new
@@ -385,7 +385,7 @@ sub generate_candidate_frames {
     
   };
   
-  $self->{'numberOfSynsets'} = scalar (keys %AllCandidates);
+  $self->{'numberOfSynsets'} = scalar (keys %AllCandidates) - $self->{'limited'};
   
   print STDERR "\n" if ($self->{'verbosity'});
   

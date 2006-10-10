@@ -2,26 +2,58 @@ package FrameNet::WordNet::Detour::Frame;
 
 require Exporter;
 our @ISA = qw(Exporter);
-our $VERSION = "0.98";
+our $VERSION = "0.99";
 
 use strict;
 use warnings;
-use Class::MethodMaker
-  [ new => 'new',
-    scalar => [ { '*_reset' => undef,
-		  '*_isset' => undef,
-		  '*_clear' => undef }, qw / name weight / ],
-    array => [ { '*_push' => '*_add',
-		 '*_pop' => undef,
-		 '*_shift' => undef,
-		 '*_unshift' => undef,
-		 '*_set' => undef } , qw / fees sims / ],
-  ];
+
+sub new {
+    my $class = shift;
+    my $self = { 'fees' => [],
+		 'sims' => [] };
+    return bless $self, $class;
+}
+
+sub fees {
+    my $self = shift;
+    return $self->{'fees'};
+}
+
+sub sims {
+    my $self = shift;
+    return $self->{'sims'};
+}
+
+sub fees_add {
+    my ($self, $fee) = @_;
+    push(@{$self->{'fees'}},$fee);
+}
+
+sub sims_add {
+    my ($self, $sim) = @_;
+    push(@{$self->{'sims'}},$sim);
+}
 
 sub add_weight {
   my $self = shift;
   my $w = shift;
   $self->{'weight'} += $w;
+}
+
+sub weight {
+    my ($self,$w) = @_;
+    if (defined $w) {
+	$self->{'weight'} = $w;
+    };
+    return $self->{'weight'};
+};
+
+sub name {
+    my ($self,$name) = @_;
+    if (defined $name) {
+	$self->{'name'} = $name;
+    };
+    return $self->{'name'};
 };
 
 1;

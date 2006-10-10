@@ -2,17 +2,11 @@ package FrameNet::WordNet::Detour::Data;
 
 require Exporter;
 our @ISA = qw(Exporter);
-our $VERSION = "0.98";
+our $VERSION = "0.99";
 
 use strict;
 use warnings;
 use FrameNet::WordNet::Detour::Frame;
-use Class::MethodMaker 
-  [ scalar => [ { '*_reset' => undef,
-		  '*_isset' => undef,
-		  '*_clear' => undef }, qw/ query message / ],
-  ];
-
 
 sub new {
   my $class = shift;
@@ -29,7 +23,23 @@ sub new {
   $this->message(shift) || $this->message('OK');
 
   return $this;
-};
+}
+
+sub query {
+    my ($self,$query) = @_;
+    if (defined $query) {
+	$self->{'query'} = $query;
+    };
+    return $self->{'query'};
+}
+
+sub message {
+    my ($self,$msg) = @_;
+    if (defined $msg) {
+	$self->{'message'} = $msg;
+    };
+    return $self->{'message'};
+}
 
 # Checks, wether the query returned some useful results or not. 
 # If not, one should check the error message via &get_message. 
