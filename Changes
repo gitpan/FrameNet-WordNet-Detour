@@ -1,6 +1,9 @@
 Revision history for FrameNet-WordNet-Detour
 
-0.99
+0.99b 10/11/06
+     - VERY small (but important) bugfix ...
+
+0.99 10/10/06
      - Implemented a couple of helper methods in the Frame and 
        Data class to get rid of the dependency on
        Class::MethodMaker. 
@@ -8,7 +11,7 @@ Revision history for FrameNet-WordNet-Detour
        a readable error message.
      - Fixed a bug in the limited condition. In the division for 
        making the results comparable in different runs, the factor
-       was calculated wrong in limited mode.
+       was wrongly calculated in limited mode.
 
 0.98 02/25/06
      - Switched to the named parameter style

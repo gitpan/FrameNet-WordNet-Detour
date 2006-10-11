@@ -1,6 +1,6 @@
 FrameNet-WordNet-Detour
 
-VERSION 0.99
+VERSION 0.99b
 
 DESCRIPTION
 
@@ -16,7 +16,6 @@ CPAN-Modules:
 - Getopt::Long (>= 2.34)
 - Pod::Usage (>=1.00)
 - File::Spec (>=0.86)
-- Class::MethodMaker (>= 2.00)
 - Test::More
 
 Additionally:

@@ -2,7 +2,7 @@ package FrameNet::WordNet::Detour;
 
 require Exporter;
 our @ISA = qw(Exporter);
-our $VERSION = "0.99";
+our $VERSION = "0.99b";
 
 use strict;
 use warnings;
@@ -15,7 +15,7 @@ use WordNet::QueryData;
 use WordNet::Similarity::path;
 use File::Spec;
 
-my $VCACHE = "0.92";
+my $VCACHE = "0.92b";
 
 
 sub new
@@ -360,11 +360,14 @@ sub generate_candidate_frames {
   
   foreach my $candidatesynset (keys %CandidateSynsets) {
     
-    # synonyms and antonyms of candidate synset
-    foreach my $tmpsynset ($self->{'wn'}->querySense("$candidatesynset",'syns'),
-			   $self->{'wn'}->queryWord("$candidatesynset",'ants')) {
-      $AllCandidates{lc("$tmpsynset")} = 1;
-    };
+      # synonyms and antonyms of candidate synset
+      foreach my $tmpsynset ($self->{'wn'}->querySense("$candidatesynset",'syns'),
+			     $self->{'wn'}->queryWord("$candidatesynset",'ants')) {
+	  # HERE !! !!!
+	  
+	  $AllCandidates{lc("$tmpsynset")} = 1 if((! $self->{'limited'}) or
+						  $self->{'synset'} !~ /$tmpsynset/);
+      };
   };
   
   
@@ -372,21 +375,23 @@ sub generate_candidate_frames {
   print STDERR "\n" if ($self->{'verbosity'} gt 1);
   # lookup all candidates
   foreach my $candidatesynset (keys %AllCandidates) {
-    $MatchingFrames = mergeResultHashes($MatchingFrames,$self->lookup_synset($candidatesynset));
-    if ($candidatesynset =~ / /i) {
-      my $synset_with_underscores = $candidatesynset;
-      $synset_with_underscores =~ s/ /_/ig;
-      $MatchingFrames = mergeResultHashes($MatchingFrames,$self->lookup_synset($synset_with_underscores));
-    } elsif ($candidatesynset =~ /_/i) {
-      my $synset_with_spaces = $candidatesynset;
-      $synset_with_spaces =~ s/_/ /ig;
-      $MatchingFrames = mergeResultHashes($MatchingFrames,$self->lookup_synset($synset_with_spaces));
-    }
-    
+      # print STDERR "!!".$candidatesynset."!!\n";
+      next if ($self->{'limited'} and $candidatesynset eq $self->{'synset'});
+      $MatchingFrames = mergeResultHashes($MatchingFrames,$self->lookup_synset($candidatesynset));
+      if ($candidatesynset =~ / /i) {
+	  my $synset_with_underscores = $candidatesynset;
+	  $synset_with_underscores =~ s/ /_/ig;
+	  $MatchingFrames = mergeResultHashes($MatchingFrames,$self->lookup_synset($synset_with_underscores));
+      } elsif ($candidatesynset =~ /_/i) {
+	  my $synset_with_spaces = $candidatesynset;
+	  $synset_with_spaces =~ s/_/ /ig;
+	  $MatchingFrames = mergeResultHashes($MatchingFrames,$self->lookup_synset($synset_with_spaces));
+      }
+      
   };
   
-  $self->{'numberOfSynsets'} = scalar (keys %AllCandidates) - $self->{'limited'};
-  
+  $self->{'numberOfSynsets'} = scalar (keys %AllCandidates);
+  #print STDERR "numberOfSynsets: ".scalar(keys %AllCandidates)."\n";
   print STDERR "\n" if ($self->{'verbosity'});
   
   return $MatchingFrames;
@@ -477,11 +482,13 @@ sub weight_frames {
   my $AllResult;
 
   my $SpreadingFactor;
+  my $FrameSpreading;
 
   foreach my $reason ('lu','match') {
     foreach my $frameName (keys %{$MatchingFrames->{$reason}}) {
       foreach my $fee (keys %{$MatchingFrames->{$reason}->{$frameName}}) {  
 	$SpreadingFactor->{$fee} += 1;
+	$FrameSpreading->{$frameName}++;
       };
     };
   };
@@ -516,8 +523,9 @@ sub weight_frames {
 	
 	$AllResult->{$frameName}->add_weight($weight);
       };
-
-      $AllResult->{$frameName}->weight($AllResult->{$frameName}->weight / $self->{numberOfSynsets});
+      # print STDERR "frameSpreading: ".$FrameSpreading->{$frameName}."\n";
+      $AllResult->{$frameName}->weight($AllResult->{$frameName}->weight /
+				       $FrameSpreading->{$frameName});
       
       print STDERR $frameName.
 	"(".(int((($AllResult->{$frameName}->{'weight'})*1000)+.5)/1000).") "
