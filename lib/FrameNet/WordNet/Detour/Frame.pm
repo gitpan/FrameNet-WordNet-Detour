@@ -56,6 +56,24 @@ sub name {
     return $self->{'name'};
 };
 
+sub get_name {
+    my ($self,$name) = @_;
+    if (defined $name) {
+	return $self->name($name);
+    };
+    return $self->name;
+};
+
+sub get_weight {
+    my ($self,$weight) = @_;
+    if (defined $weight) {
+	return $self->weight($weight);
+    };
+    return $self->weight;
+};
+
+
+
 1;
 
 
@@ -87,7 +105,6 @@ Note: Some of the methods allow writing of properties. This is only used during 
 =item name
 
 If an argument is provided, the name of the frame is set to that value.  The method returns the name (after assignment to a provided value, if appropriate).
-
 
 =item weight
 

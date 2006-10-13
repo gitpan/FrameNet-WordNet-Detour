@@ -33,12 +33,28 @@ sub query {
     return $self->{'query'};
 }
 
+sub get_query {
+    my ($self,$query) = @_;
+    if (defined $query) {
+	return $self->query($query);
+    };
+    return $self->query;
+}
+
 sub message {
     my ($self,$msg) = @_;
     if (defined $msg) {
 	$self->{'message'} = $msg;
     };
     return $self->{'message'};
+}
+
+sub get_message {
+    my ($self,$msg) = @_;
+    if (defined $msg) {
+	$self->message($msg);
+    };
+    return $self->message;
 }
 
 # Checks, wether the query returned some useful results or not. 
@@ -50,6 +66,11 @@ sub isOK {
   return 1 if ($self->{'message'} eq 'OK');
   return 0;
 };
+
+sub is_ok {
+    my $self = shift;
+    return $self->isOK;
+}
 
 sub get_fees {
   my $self = shift;
@@ -198,8 +219,8 @@ FrameNet::WordNet::Detour::Data - A class representing the results of the Detour
 
   my $result = $detour->query($synset);
 
-  $result->isOK;       # Returns whether there were problems in the run
-  $result->getMessage; # Returns 'Ok' or an error message
+  $result->is_ok;   # Returns whether there were problems in the run
+  $result->message; # Returns 'Ok' or an error message
 
   # All frames are returned as lists of 
   # L<FrameNet::WordNet::Detour::Frame> objects

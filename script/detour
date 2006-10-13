@@ -8,7 +8,7 @@ use Pod::Usage;
 use Storable; 
 #use Mac::Growl;
 
-my $VERSION = "0.99";
+my $VERSION = "0.99c";
 # one result by default
 my $number_results = 1;
 my $weights = 0;

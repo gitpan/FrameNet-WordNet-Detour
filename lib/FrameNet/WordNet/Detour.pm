@@ -2,7 +2,7 @@ package FrameNet::WordNet::Detour;
 
 require Exporter;
 our @ISA = qw(Exporter);
-our $VERSION = "0.99b";
+our $VERSION = "0.99c";
 
 use strict;
 use warnings;
@@ -666,7 +666,7 @@ FrameNet::WordNet::Detour - a WordNet to FrameNet Detour.
 
   my $result = $detour->query("walk#v#1");
 
-  if ($result->isOK) {
+  if ($result->is_ok) {
     print "Best frames: \n";
     print join(' ', @{$result->get_best_framenames})."\n";
 
@@ -675,11 +675,11 @@ FrameNet::WordNet::Detour - a WordNet to FrameNet Detour.
 
     print "All frames with weights: \n";
     foreach my $frame (@{$result->get_all_frames}) {
-	print $frame->get_name.": ";
+	print $frame->name.": ";
 	print $frame->get_weight."\n";
     }
   } else {
-    print $result->get_message."\n";
+    print $result->message."\n";
   } 
 
 

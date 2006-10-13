@@ -1,5 +1,9 @@
 Revision history for FrameNet-WordNet-Detour
 
+0.99c 
+     - Fixed a bug in the documentation: get_message and get_name
+       did not work.
+
 0.99b 10/11/06
      - VERY small (but important) bugfix ...
 
