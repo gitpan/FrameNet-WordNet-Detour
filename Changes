@@ -1,6 +1,10 @@
 Revision history for FrameNet-WordNet-Detour
 
-0.99c 
+1.0
+     - Fixed a bug in the weighting algorithm
+     - Introduced the method version().
+
+0.99c 10/14/06 
      - Fixed a bug in the documentation: get_message and get_name
        did not work.
 

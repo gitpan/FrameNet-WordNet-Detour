@@ -2,7 +2,7 @@ package FrameNet::WordNet::Detour;
 
 require Exporter;
 our @ISA = qw(Exporter);
-our $VERSION = "0.99c";
+our $VERSION = "1.0";
 
 use strict;
 use warnings;
@@ -523,9 +523,9 @@ sub weight_frames {
 	
 	$AllResult->{$frameName}->add_weight($weight);
       };
-      # print STDERR "frameSpreading: ".$FrameSpreading->{$frameName}."\n";
-      $AllResult->{$frameName}->weight($AllResult->{$frameName}->weight /
-				       $FrameSpreading->{$frameName});
+      # print STDERR "frameSpreading ($frameName): ".$FrameSpreading->{$frameName}."\n";
+      #$AllResult->{$frameName}->weight($AllResult->{$frameName}->weight /
+	#			       $FrameSpreading->{$frameName});
       
       print STDERR $frameName.
 	"(".(int((($AllResult->{$frameName}->{'weight'})*1000)+.5)/1000).") "
@@ -622,11 +622,15 @@ sub mergeResultHashes {
   return $H1;
 };
 
+sub version {
+    my $self = shift;
+    return $VERSION;
+};
 
 sub round  {
   my $class = shift;
   return int(((shift)*1000)+0.5)/1000;
-}
+};
 
 sub toHash {
   my $list = shift;
@@ -818,9 +822,15 @@ Default: No verbose, no debug.
 
 Returns a rounded number that has only two decimals. Static method.
 
+=item version ( )
+
+Returns the version number of the module.
+
 =back
 
-=head1 BUGS
+=head1 KNOWN BUGS
+
+- More than one detour object accessing the same cache lead to segmentation faults.
 
 Please report bugs to L<mailto:reiter@cpan.org>.
 
