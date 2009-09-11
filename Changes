@@ -1,5 +1,9 @@
 Revision history for FrameNet-WordNet-Detour
 
+1.1    09/11/09
+     - Added documentation
+     - Made testing more robust
+
 1.0
      - Fixed a bug in the weighting algorithm
      - Introduced the method version().

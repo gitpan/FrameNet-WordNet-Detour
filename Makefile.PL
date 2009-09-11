@@ -15,12 +15,10 @@ WriteMakefile(
 		'WordNet::QueryData' => 1.37,
 		'WordNet::Similarity::path' => 0.10,
 		'XML::TreeBuilder' => 3.09,
-		'Getopt::Long' => 2.34,
+		'Getopt::Long' => 2.20,
 		'Pod::Usage' => 1.00,
 		'File::Spec' => 0.86 },
-
-	      EXE_FILES => 
-	      [ 'script/detour' ],
+	      EXE_FILES => [ 'script/detour' ],
 
 	      dist => 
 	      { COMPRESS => 'gzip -9f', SUFFIX => 'gz', },

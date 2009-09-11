@@ -24,17 +24,17 @@ sub sims {
     return $self->{'sims'};
 }
 
-sub fees_add {
+sub _fees_add {
     my ($self, $fee) = @_;
     push(@{$self->{'fees'}},$fee);
 }
 
-sub sims_add {
+sub _sims_add {
     my ($self, $sim) = @_;
     push(@{$self->{'sims'}},$sim);
 }
 
-sub add_weight {
+sub _add_weight {
   my $self = shift;
   my $w = shift;
   $self->{'weight'} += $w;
@@ -117,6 +117,14 @@ Several Uses: If called without arguments, it returns the list of frame evoking 
 =item sims
 
 Same as C<fees>, except that it works on the list of similarities of the fees.
+
+=item get_name ( )
+
+Returns the name of the frame
+
+=item get_weight ( )
+
+Returns the weight of the frame
 
 =back
 

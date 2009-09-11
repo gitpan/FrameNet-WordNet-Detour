@@ -2,7 +2,7 @@ package FrameNet::WordNet::Detour;
 
 require Exporter;
 our @ISA = qw(Exporter);
-our $VERSION = "1.0";
+our $VERSION = "1.1";
 
 use strict;
 use warnings;
@@ -71,12 +71,12 @@ sub new
     carp "Warning: frames.xml could not be found." if ($this->{'fnxml'} eq "");
   };
 
-  $this->initialize(\%params);
+  $this->_initialize(\%params);
 
   return $this;
 }
 
-sub initialize {
+sub _initialize {
   my $self = shift;
   my $par = shift;
 
@@ -113,7 +113,7 @@ sub initialize {
 
   $self->{'results'} = {};
   
-  $self->set_cache_name;
+  $self->_set_cache_name;
 
   $self->{'luhashname'} = File::Spec->catfile((File::Spec->tmpdir),$self->{'tmp_filename_prefix'}.
     "FrameNet-WordNet-Detour-".$VCACHE."-luhash.dat");
@@ -127,14 +127,14 @@ sub reset {
   $self->{'result'} = {};
 };
 
-sub set_cache_name {
+sub _set_cache_name {
   my $self = shift;
   $self->{'resulthashname'} = File::Spec->catfile((File::Spec->tmpdir),$self->{'tmp_filename_prefix'}.
     "FrameNet-WordNet-Detour-".
       $VCACHE."-results_".$self->{'limited'}.($self->{'matched'}?"1":"").".dat");
 }
 
-sub init_WordNet {
+sub _init_WordNet {
   my $self = shift;
   my $dictpath = File::Spec->catdir(($self->{'wnhome'},"dict"));
   if (! $self->{'wn'}) {
@@ -172,7 +172,7 @@ sub query ($$) {
 	}
       };
     };
-    $self->init_WordNet;
+    $self->_init_WordNet;
     my ($word, $pos, $sense) = split(/#/, $synset);
     
     if (scalar($self->{'wn'}->querySense("$word#$pos")) == 0) {
@@ -180,7 +180,7 @@ sub query ($$) {
       carp "$msg" if ($self->{'verbosity'});
       return FrameNet::WordNet::Detour::Data->new({},$synset,$msg);
     };
-    return FrameNet::WordNet::Detour::Data->new($self->basicQuery($synset),$synset,'OK');
+    return FrameNet::WordNet::Detour::Data->new($self->_basicQuery($synset),$synset,'OK');
   }
 
   # if the query-word is underspecified (e.g. get#v),
@@ -195,7 +195,7 @@ sub query ($$) {
       return $self->query($KnownResults->{$synset}) 
 	if (exists $KnownResults->{$synset});
     };
-    $self->init_WordNet;
+    $self->_init_WordNet;
     my @senses = $self->{'wn'}->querySense($synset);
     if ((scalar @senses) == 0) {
       my $msg = "\'$synset\' not listed in WordNet";
@@ -228,7 +228,7 @@ sub query ($$) {
   }
 };
 
-sub basicQuery {
+sub _basicQuery {
   my ($self,$synset) = @_;
   
   print STDERR "Querying: $synset ...\n" if ($self->{'verbosity'});
@@ -239,8 +239,8 @@ sub basicQuery {
   my @tmp = split(/#/,$synset);
   $self->{'in_word'} = $tmp[0];
   
-  $self->{'result'}{'raw'} = $self->weight_frames($self->generate_candidate_frames($synset));
-  $self->{'result'}{'sorted'} = $self->sort_by_weight;
+  $self->{'result'}{'raw'} = $self->_weight_frames($self->_generate_candidate_frames($synset));
+  $self->{'result'}{'sorted'} = $self->_sort_by_weight;
 
   print STDERR "Best result(s): ".(join(' ',$self->best_frame))."\n" 
     if ($self->{'verbosity'});
@@ -278,25 +278,25 @@ sub uncached {
 sub limited {
   my $self = shift;
   $self->{'limited'} = 1;
-  $self->set_cache_name;
+  $self->_set_cache_name;
 };
 
 sub unlimited {
   my $self = shift;
   $self->{'limited'} = 0;
-  $self->set_cache_name;
+  $self->_set_cache_name;
 };
 
 sub matched {
     my $self = shift;
     $self->{'matched'} = 1;
-    $self->set_cache_name;
+    $self->_set_cache_name;
 };
 
 sub unmatched {
     my $self = shift;
     $self->{'matched'} = 0;
-    $self->set_cache_name;
+    $self->_set_cache_name;
 };
 
 sub set_verbose {
@@ -314,7 +314,7 @@ sub set_debug {
     $self->{'verbosity'} = 2;
 };
 
-sub generate_candidate_frames {
+sub _generate_candidate_frames {
   # synset format: car#n#2...
   my ($self,$synset) = @_;
 
@@ -377,15 +377,15 @@ sub generate_candidate_frames {
   foreach my $candidatesynset (keys %AllCandidates) {
       # print STDERR "!!".$candidatesynset."!!\n";
       next if ($self->{'limited'} and $candidatesynset eq $self->{'synset'});
-      $MatchingFrames = mergeResultHashes($MatchingFrames,$self->lookup_synset($candidatesynset));
+      $MatchingFrames = _mergeResultHashes($MatchingFrames,$self->_lookup_synset($candidatesynset));
       if ($candidatesynset =~ / /i) {
 	  my $synset_with_underscores = $candidatesynset;
 	  $synset_with_underscores =~ s/ /_/ig;
-	  $MatchingFrames = mergeResultHashes($MatchingFrames,$self->lookup_synset($synset_with_underscores));
+	  $MatchingFrames = _mergeResultHashes($MatchingFrames,$self->_lookup_synset($synset_with_underscores));
       } elsif ($candidatesynset =~ /_/i) {
 	  my $synset_with_spaces = $candidatesynset;
 	  $synset_with_spaces =~ s/_/ /ig;
-	  $MatchingFrames = mergeResultHashes($MatchingFrames,$self->lookup_synset($synset_with_spaces));
+	  $MatchingFrames = _mergeResultHashes($MatchingFrames,$self->_lookup_synset($synset_with_spaces));
       }
       
   };
@@ -397,7 +397,7 @@ sub generate_candidate_frames {
   return $MatchingFrames;
 };
 
-sub lookup_synset {
+sub _lookup_synset {
   my ($self,$synset) = @_;
   my $MatchingFrames;
 
@@ -409,7 +409,7 @@ sub lookup_synset {
   ### Retrieve /tmp/$usr-lu2frame-hash.pl if exists and up-to-date; else create it###
   if (! -e $self->{'luhashname'}) # || ((stat($self->{'luhashname'}))[9] < (stat($FNXML))[9])) {
     {
-      $self->make_lu2frames_hash();
+      $self->_make_lu2frames_hash();
     };
   my %TmpHash = %{retrieve($self->{'luhashname'})};
   my $Lu2Frames = $TmpHash{'lu2frames'};
@@ -477,7 +477,7 @@ sub lookup_synset {
 };
 
 
-sub weight_frames {
+sub _weight_frames {
   my ($self,$MatchingFrames) = @_;
   my $AllResult;
 
@@ -506,11 +506,11 @@ sub weight_frames {
       
       foreach my $fee (keys %{$MatchingFrames->{$reason}->{$frameName}}) {
 
-	$AllResult->{$frameName}->fees_add($fee);
+	$AllResult->{$frameName}->_fees_add($fee);
 	
 	my $weight = $self->{'relatedness'}{"$fee"};
 	
-	$AllResult->{$frameName}->sims_add($weight);
+	$AllResult->{$frameName}->_sims_add($weight);
 
 	# cheat for adjectives!!!
 	if (!$weight) {$weight = 0.5};
@@ -521,7 +521,7 @@ sub weight_frames {
 	# divided by Spreading Factor
 	$weight /= $SpreadingFactor->{$fee};
 	
-	$AllResult->{$frameName}->add_weight($weight);
+	$AllResult->{$frameName}->_add_weight($weight);
       };
       # print STDERR "frameSpreading ($frameName): ".$FrameSpreading->{$frameName}."\n";
       #$AllResult->{$frameName}->weight($AllResult->{$frameName}->weight /
@@ -541,7 +541,7 @@ sub weight_frames {
 };
 
 
-sub sort_by_weight {
+sub _sort_by_weight {
    my ($self) = @_; 
   
   my $AllResult = $self->{'result'}->{'raw'};
@@ -558,14 +558,14 @@ sub sort_by_weight {
 
 sub best_frame {
   my $self = shift;
-  my $f = $self->n_results(1);
+  my $f = $self->_n_results(1);
   return keys %$f;
 };
 
-sub n_results {
+sub _n_results {
   my ($self,$number_results) = @_;
   
-  my $ResultsByWeight = $self->sort_by_weight();
+  my $ResultsByWeight = $self->_sort_by_weight();
 
   my $ResultHash;
 
@@ -583,7 +583,7 @@ sub n_results {
 };
 
 
-sub make_lu2frames_hash {
+sub _make_lu2frames_hash {
   my $self = shift;
   print STDERR "Generating LU index may take a while...\n" if ($self->{'verbosity'});
 
@@ -606,7 +606,7 @@ sub make_lu2frames_hash {
 };
 
 
-sub mergeResultHashes {
+sub _mergeResultHashes {
   my ($H1,$H2) = @_;
   foreach my $reason ('lu','match') {
       foreach my $frameName (keys %{$H2->{$reason}}) {
@@ -630,15 +630,6 @@ sub version {
 sub round  {
   my $class = shift;
   return int(((shift)*1000)+0.5)/1000;
-};
-
-sub toHash {
-  my $list = shift;
-  my $hash = {};
-  foreach my $elem (@$list) {
-    $hash->{$elem} = 1;
-  };
-  return $hash;
 };
 
 1;
@@ -818,6 +809,14 @@ All output goes to STDERR.
 
 Default: No verbose, no debug. 
 
+=item matched ( )
+
+Sets the package in matched mode
+
+=item unmatched ( )
+
+Disables the matching mode
+
 =item round ( $number ) 
 
 Returns a rounded number that has only two decimals. Static method.
@@ -825,6 +824,14 @@ Returns a rounded number that has only two decimals. Static method.
 =item version ( )
 
 Returns the version number of the module.
+
+=item best_frame ( )
+
+Returns the best matching frame.
+
+=item reset ( )
+
+Resets the package, such that a new synset can be queried.
 
 =back
 

@@ -33,13 +33,13 @@ sub query {
     return $self->{'query'};
 }
 
-sub get_query {
-    my ($self,$query) = @_;
-    if (defined $query) {
-	return $self->query($query);
-    };
-    return $self->query;
-}
+#sub get_query {
+#    my ($self,$query) = @_;
+#    if (defined $query) {
+#	return $self->query($query);
+#    };
+#    return $self->query;
+#}
 
 sub message {
     my ($self,$msg) = @_;
@@ -49,13 +49,7 @@ sub message {
     return $self->{'message'};
 }
 
-sub get_message {
-    my ($self,$msg) = @_;
-    if (defined $msg) {
-	$self->message($msg);
-    };
-    return $self->message;
-}
+
 
 # Checks, wether the query returned some useful results or not. 
 # If not, one should check the error message via &get_message. 
@@ -67,10 +61,7 @@ sub isOK {
   return 0;
 };
 
-sub is_ok {
-    my $self = shift;
-    return $self->isOK;
-}
+
 
 sub get_fees {
   my $self = shift;
@@ -95,7 +86,7 @@ sub get_weights {
 };
 
 # not working
-sub get_delta {
+sub _get_delta {
   my $self = shift;
   my $frame = shift;
   
@@ -292,6 +283,24 @@ Returns the overall number of frames found for this specific query:
 =item get_frames_with_weight WEIGHT
 
 Returns a reference to a list of the frames with the given weight. You should notice, that you have to give the exact weight - e.g. like in the get_weights-array. Rounded values will not find anything.
+
+=item new ( )
+
+=item get_all_framenames 
+
+Returns a list containing all frame names.
+
+=item get_best_framenames N
+
+Returns a list of N highest weighted names of frames.
+
+=item get_best_weight
+
+Returns the highest weight
+
+=item isOK
+
+Returns true, if the data object is sober and clean
 
 =back
 
